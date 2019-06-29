@@ -80,7 +80,7 @@ private:
   std::vector<std::shared_ptr<templates::Node>> mNodes;
 };
 
-Template parse(const String& str);
+LIQUID_API Template parse(const String& str);
 
 } // namespace liquid
 
