@@ -23,8 +23,6 @@ public:
   static string_type from_integer(int n) { return std::to_string(n); }
   static string_type from_number(double x) { return std::to_string(x); }
 
-  static int strlength(const string_type& str) { return static_cast<int>(str.size()); }
-
   static int compare(const string_type& lhs, const string_type& rhs)
   {
     return lhs.compare(rhs);
@@ -65,17 +63,12 @@ public:
     return result;
   }
 
-  static char_type char_at(const string_type& str, int offset) { return str.at(offset); }
-
   static bool is_space(char_type c) { return c == ' ' || c == '\t'; }
-  static bool is_underscore(char_type c) { return c == '_'; }
   static bool is_newline(char_type c) { return c == '\n'; }
   static bool is_digit(char_type c) { return c >= '0' && c <= '9'; }
   static bool is_letter(char_type c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
   static bool is_letter_or_number(char_type c) { return is_digit(c) || is_letter(c); }
 };
-
-using String = StringBackend::string_type;
 
 } // namespace liquid
 

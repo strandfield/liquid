@@ -22,12 +22,12 @@ public:
 
   Context& context();
 
-  String render(const Template& t, const json::Object& data);
+  std::string render(const Template& t, const json::Object& data);
 
   json::Json eval(const std::shared_ptr<Object>& obj);
   void process(const std::shared_ptr<Template::Node>& node);
   void process(const std::vector<std::shared_ptr<Template::Node>>& nodes);
-  virtual String stringify(const json::Json& val);
+  virtual std::string stringify(const json::Json& val);
 
   static bool evalCondition(const json::Json& val);
 
@@ -40,7 +40,7 @@ public:
   void visitTag(const tags::Continue& tag);
 
 protected:
-  void write(const String& str);
+  void write(const std::string& str);
 
   /* Objects */
   json::Json eval_value(const objects::Value& val);
@@ -50,11 +50,11 @@ protected:
   json::Json eval_binop(const objects::BinOp& binop);
   json::Json eval_pipe(const objects::Pipe& pipe);
 
-  virtual json::Json applyFilter(const String& name, const json::Json& object, const std::vector<json::Json>& args);
+  virtual json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);
 
 private:
   Context m_context;
-  String m_result;
+  std::string m_result;
 };
 
 } // namespace liquid

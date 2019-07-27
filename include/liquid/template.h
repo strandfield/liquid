@@ -41,14 +41,14 @@ public:
 class LIQUID_API TextNode : public Node
 {
 public:
-  TextNode(const String& str);
-  TextNode(String&& str);
+  TextNode(const std::string& str);
+  TextNode(std::string&& str);
   ~TextNode() = default;
 
   bool isText() const override;
 
 public:
-  String text;
+  std::string text;
 };
 
 } // namespace templates
@@ -67,10 +67,10 @@ public:
 
   const std::vector<std::shared_ptr<templates::Node>>& nodes() const { return mNodes; }
 
-  String render(const json::Object& data) const;
+  std::string render(const json::Object& data) const;
 
   template<typename R>
-  String render(const json::Object& data) const
+  std::string render(const json::Object& data) const
   {
     R renderer;
     return renderer.render(*this, data);
@@ -80,7 +80,7 @@ private:
   std::vector<std::shared_ptr<templates::Node>> mNodes;
 };
 
-LIQUID_API Template parse(const String& str);
+LIQUID_API Template parse(const std::string& str);
 
 } // namespace liquid
 

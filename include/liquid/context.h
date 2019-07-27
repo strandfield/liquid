@@ -33,7 +33,7 @@ public:
     explicit Scope(Context& c);
     ~Scope();
 
-    json::Json& operator[](const String& str);
+    json::Json& operator[](const std::string& str);
 
   private:
     Context* context_;

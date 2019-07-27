@@ -24,7 +24,7 @@ Context::Scope::~Scope()
   context_->scopes().pop_back();
 }
 
-json::Json& Context::Scope::operator[](const String& str)
+json::Json& Context::Scope::operator[](const std::string& str)
 {
   return context_->scopes().back().data[str];
 }

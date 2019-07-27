@@ -17,13 +17,13 @@ Value::Value(const json::Json& val)
 
 }
 
-Variable::Variable(const String& n)
+Variable::Variable(const std::string& n)
   : name(n)
 {
 
 }
 
-Variable::Variable(String&& n)
+Variable::Variable(std::string&& n)
   : name(std::move(n))
 {
 
@@ -36,7 +36,7 @@ ArrayAccess::ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_p
 
 }
 
-MemberAccess::MemberAccess(const std::shared_ptr<Object>& obj, const String& name)
+MemberAccess::MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name)
   : object(obj),
   name(name)
 {
@@ -51,7 +51,7 @@ BinOp::BinOp(Operation op, const std::shared_ptr<Object>& left, const std::share
 
 }
 
-Pipe::Pipe(const std::shared_ptr<Object>& object, const String& filtername, const std::vector<json::Json>& args)
+Pipe::Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args)
   : object(object),
   filterName(filtername),
   arguments(args)

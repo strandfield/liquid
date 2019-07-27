@@ -33,7 +33,7 @@ Context& Renderer::context()
   return m_context;
 }
 
-String Renderer::render(const Template& t, const json::Object& data)
+std::string Renderer::render(const Template& t, const json::Object& data)
 {
   reset();
   context().currentScope().data = data;
@@ -54,10 +54,10 @@ void Renderer::process(const std::shared_ptr<Template::Node>& n)
     static_cast<Tag*>(n.get())->accept(*this);
 }
 
-String Renderer::stringify(const json::Json & val)
+std::string Renderer::stringify(const json::Json & val)
 {
   if (val.isNull())
-    return String();
+    return {};
 
   if (val.isString())
     return val.toString();
@@ -69,7 +69,7 @@ String Renderer::stringify(const json::Json & val)
   throw std::runtime_error("Renderer::stringify() : could not convert to string");
 }
 
-void Renderer::write(const String& str)
+void Renderer::write(const std::string& str)
 {
   m_result += str;
 }
@@ -208,7 +208,7 @@ json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
   return applyFilter(pipe.filterName, obj, args);
 }
 
-json::Json Renderer::applyFilter(const String& name, const json::Json& object, const std::vector<json::Json>& args)
+json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
 {
   throw std::runtime_error("Unknown filter");
 }

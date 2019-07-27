@@ -35,12 +35,12 @@ struct LIQUID_API Token
   };
 
   Kind kind;
-  String* text_;
+  std::string* text_;
   int offset_;
   int length_;
 
   StringRef toStringRef() const;
-  String toString() const;
+  std::string toString() const;
 
   bool operator==(const char *str) const;
 };
@@ -50,7 +50,7 @@ class LIQUID_API Tokenizer
 public:
   Tokenizer();
 
-  std::vector<Token> tokenize(const String& str);
+  std::vector<Token> tokenize(const std::string& str);
 
 protected:
   Token read();
@@ -58,7 +58,7 @@ protected:
   bool atEnd() const;
 
   int position() const { return mPosition; }
-  const String& input() const { return mInput; }
+  const std::string& input() const { return mInput; }
 
 protected:
   friend struct TokenProducer;
@@ -78,7 +78,7 @@ protected:
 private:
   int mPosition;
   int mStartPos;
-  String mInput;
+  std::string mInput;
   std::set<Char> mPunctuators;
 };
 
@@ -89,7 +89,7 @@ public:
   Parser();
   ~Parser();
 
-  std::vector<std::shared_ptr<liquid::templates::Node>> parse(const String& document);
+  std::vector<std::shared_ptr<liquid::templates::Node>> parse(const std::string& document);
 
 protected:
   void readNode();
@@ -101,7 +101,7 @@ protected:
 
   inline Tokenizer & tokenizer() { return mTokenizer;  }
   inline int position() const { return mPosition; }
-  inline const String& document() const { return mDocument; }
+  inline const std::string& document() const { return mDocument; }
 
 protected:
   void process_tag_assign(std::vector<Token> & tokens);
@@ -119,7 +119,7 @@ protected:
 
 private:
   int mPosition;
-  String mDocument;
+  std::string mDocument;
   Tokenizer mTokenizer;
   std::vector<std::shared_ptr<liquid::templates::Node>> mNodes;
   std::vector<std::shared_ptr<liquid::templates::Node>> mStack;

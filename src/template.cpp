@@ -29,13 +29,13 @@ bool Node::isObject() const
 }
 
 
-TextNode::TextNode(const String& str)
+TextNode::TextNode(const std::string& str)
   : text(str)
 {
 
 }
 
-TextNode::TextNode(String&& str)
+TextNode::TextNode(std::string&& str)
   : text(std::move(str))
 {
 
@@ -70,13 +70,13 @@ Template::~Template()
 
 }
 
-String Template::render(const json::Object& data) const
+std::string Template::render(const json::Object& data) const
 {
   Renderer r;
   return r.render(*this, data);
 }
 
-Template parse(const String& str)
+Template parse(const std::string& str)
 {
   liquid::Parser lp;
   return Template{ lp.parse(str) };

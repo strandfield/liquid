@@ -48,7 +48,7 @@ StringRef Token::toStringRef() const
   return StringBackend::mid_ref(*text_, offset_, length_);
 }
 
-String Token::toString() const
+std::string Token::toString() const
 {
   return StringBackend::mid(*text_, offset_, length_);
 }
@@ -63,7 +63,7 @@ Tokenizer::Tokenizer()
   mPunctuators = std::set<Char>{ '!', '<', '>', '=' };
 }
 
-std::vector<Token> Tokenizer::tokenize(const String& str)
+std::vector<Token> Tokenizer::tokenize(const std::string& str)
 {
   std::vector<Token> result;
   
@@ -115,17 +115,17 @@ Token Tokenizer::read()
 
 Char Tokenizer::readChar()
 {
-  return StringBackend::char_at(mInput, mPosition++);
+  return mInput.at(mPosition++);
 }
 
 Char Tokenizer::peekChar() const
 {
-  return StringBackend::char_at(mInput, mPosition);
+  return mInput.at(mPosition);
 }
 
 void Tokenizer::seek(int pos)
 {
-  mPosition = std::min(pos, StringBackend::strlength(input()));
+  mPosition = std::min(pos, static_cast<int>(input().length()));
 }
 
 bool Tokenizer::isPunctuator(const Char & c) const
@@ -153,7 +153,7 @@ Token Tokenizer::produce(Token::Kind k)
 Token Tokenizer::readIdentifier()
 {
   auto is_valid = [](const Char& c) -> bool {
-    return StringBackend::is_letter_or_number(c) || StringBackend::is_underscore(c);
+    return StringBackend::is_letter_or_number(c) || c == '_';
   };
 
   while (!atEnd() && is_valid(peekChar()))
@@ -218,12 +218,12 @@ Token Tokenizer::readOperator()
 
 bool Tokenizer::atEnd() const
 {
-  return StringBackend::strlength(mInput) == mPosition;
+  return mInput.length() == mPosition;
 }
 
 static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens);
 
-static String parse_object_read_operator(std::vector<Token>& tokens)
+static std::string parse_object_read_operator(std::vector<Token>& tokens)
 {
   Token tok = vec::take_first(tokens);
   if (tok.kind != Token::Operator)
@@ -306,11 +306,11 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
   return obj;
 }
 
-static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<String> operators)
+static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<std::string> operators)
 {
   struct OpInfo { objects::BinOp::Operation name; int precedence; };
 
-  static std::map<String, OpInfo> map{
+  static std::map<std::string, OpInfo> map{
     { "or", { objects::BinOp::Or, 4 } },
     { "and", { objects::BinOp::And, 3 } },
     { "!=", { objects::BinOp::Inequal, 2 } },
@@ -345,7 +345,7 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
   Token tok = vec::take_first(tokens);
   tok = vec::take_first(tokens);
 
-  String name = tok.toString();
+  std::string name = tok.toString();
 
   auto ret = std::make_shared<objects::Pipe>(obj, name);
 
@@ -386,7 +386,7 @@ static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 
   std::vector<std::shared_ptr<liquid::Object>> operands;
   operands.push_back(obj);
-  std::vector<String> operators;
+  std::vector<std::string> operators;
 
   while (!tokens.empty() && tokens.front().kind != Token::Pipe)
   {
@@ -415,7 +415,7 @@ Parser::~Parser()
 
 }
 
-std::vector<std::shared_ptr<liquid::templates::Node>> Parser::parse(const String & document)
+std::vector<std::shared_ptr<liquid::templates::Node>> Parser::parse(const std::string & document)
 {
   mDocument = StringBackend::normalize(document);
   mPosition = 0;
@@ -586,9 +586,9 @@ void Parser::process_tag_endif(std::vector<Token> & tokens)
 
 void Parser::process_tag_for(std::vector<Token> & tokens)
 {
-  String name = vec::take_first(tokens).toString();
+  std::string name = vec::take_first(tokens).toString();
 
-  String in = vec::take_first(tokens).toString();
+  std::string in = vec::take_first(tokens).toString();
   if (in != "in")
     throw std::runtime_error{ "Bad for" };
 

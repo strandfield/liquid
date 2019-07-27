@@ -12,7 +12,7 @@ namespace liquid
 namespace tags
 {
 
-Assign::Assign(const String& varname, const std::shared_ptr<Object>& expr)
+Assign::Assign(const std::string& varname, const std::shared_ptr<Object>& expr)
   : variable(varname),
     value(expr)
 {
@@ -25,7 +25,7 @@ void Assign::accept(Renderer& r)
 }
 
 
-For::For(const String& varname, const std::shared_ptr<Object>& expr)
+For::For(const std::string& varname, const std::shared_ptr<Object>& expr)
   : variable(varname),
     object(expr)
 {

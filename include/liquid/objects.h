@@ -28,12 +28,12 @@ public:
 class Variable : public Object
 {
 public:
-  Variable(const String& n);
-  Variable(String&& n);
+  Variable(const std::string& n);
+  Variable(std::string&& n);
   ~Variable() = default;
 
 public:
-  String name;
+  std::string name;
 };
 
 class ArrayAccess : public Object
@@ -50,12 +50,12 @@ public:
 class MemberAccess : public Object
 {
 public:
-  MemberAccess(const std::shared_ptr<Object>& obj, const String& name);
+  MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name);
   ~MemberAccess() = default;
 
 public:
   std::shared_ptr<Object> object;
-  String name;
+  std::string name;
 };
 
 class BinOp : public Object
@@ -84,12 +84,12 @@ public:
 class Pipe : public Object
 {
 public:
-  Pipe(const std::shared_ptr<Object>& object, const String& filtername, const std::vector<json::Json>& args = {});
+  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args = {});
   ~Pipe() = default;
 
 public:
   std::shared_ptr<Object> object;
-  String filterName;
+  std::string filterName;
   std::vector<json::Json> arguments;
 };
 

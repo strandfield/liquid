@@ -20,26 +20,26 @@ namespace tags
 class Assign : public Tag
 {
 public:
-  Assign(const String& varname, const std::shared_ptr<Object> & expr);
+  Assign(const std::string& varname, const std::shared_ptr<Object> & expr);
   ~Assign() = default;
 
   void accept(Renderer& r);
 
 public:
-  String variable;
+  std::string variable;
   std::shared_ptr<Object> value;
 };
 
 class For : public Tag
 {
 public:
-  For(const String& varname, const std::shared_ptr<Object> & expr);
+  For(const std::string& varname, const std::shared_ptr<Object> & expr);
   ~For() = default;
 
   void accept(Renderer& r);
 
 public:
-  String variable;
+  std::string variable;
   std::shared_ptr<Object> object;
   std::vector<std::shared_ptr<templates::Node>> body;
 };

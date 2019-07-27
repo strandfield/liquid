@@ -106,7 +106,7 @@ TEST(Liquid, arrayaccess) {
   ASSERT_EQ(result, "2");
 }
 
-static json::Json createContact(const liquid::String& name, int age, bool restricted = false)
+static json::Json createContact(const std::string& name, int age, bool restricted = false)
 {
   json::Object obj = {};
   obj["name"] = name;
@@ -166,12 +166,12 @@ class CustomRenderer : public liquid::Renderer
 {
 public:
 
-  json::Json applyFilter(const liquid::String& name, const json::Json& object, const std::vector<json::Json>& args) override;
+  json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args) override;
 
   json::Serializer serializer;
 };
 
-static liquid::String filter_uppercase(const liquid::String& str)
+static std::string filter_uppercase(const std::string& str)
 {
   std::string result = str;
   for (char& c : result)
@@ -189,7 +189,7 @@ static std::string filter_substr(std::string str, int pos, int count)
   return str.substr(pos, count);
 }
 
-json::Json CustomRenderer::applyFilter(const liquid::String& name, const json::Json& object, const std::vector<json::Json>& args)
+json::Json CustomRenderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
 {
   if(name == "uppercase")
     return liquid::filters::apply(filter_uppercase, object, args, serializer);

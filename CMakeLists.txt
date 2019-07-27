@@ -29,8 +29,6 @@ file(GLOB_RECURSE JSON_HDR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/includ
 
 add_custom_target(json-toolkit SOURCES ${JSON_HDR_FILES})
 
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/include/liquid/json-config.h" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include/json-toolkit")
-
 #add_library(json-toolkit INTERFACE)
 #target_sources(json-toolkit INTERFACE ${JSON_HDR_FILES})
 
