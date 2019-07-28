@@ -37,7 +37,7 @@ matrix:
     script:
       - cmake -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER="g++-6" ..
       - make
-      - cd test
+      - cd tests
       - ./tests
       - cd ..
       - cd ..
