@@ -53,8 +53,6 @@ foreach(_source IN ITEMS ${HDR_FILES} ${SRC_FILES})
 endforeach()
 
 target_compile_definitions(liquid PUBLIC -DLIQUID_BUILD_SHARED_LIBRARY)
-target_compile_definitions(liquid PUBLIC -DJSONTOOLKIT_HAS_CONFIG)
-
 
 ##################################################################
 ###### tests, examples & benchmarks
