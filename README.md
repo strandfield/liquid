@@ -1,6 +1,9 @@
 
 # `liquid` 
 
+[![Build Status](https://api.travis-ci.org/bandicode/liquid.svg?branch=master)](https://travis-ci.org/bandicode/liquid)
+[![codecov](https://codecov.io/gh/bandicode/liquid/branch/master/graph/badge.svg)](https://codecov.io/gh/bandicode/liquid)
+
 This project is a C++ port of [Shopify's Liquid template engine](https://github.com/Shopify/liquid) (originally written in Ruby).
 
 The project's only dependencies are the C++ standard library and [json-toolkit](https://github.com/bandicode/json-toolkit).
@@ -14,7 +17,7 @@ json::Object data = {};
 data["name"] = "Alice";
 std::string result = tmplt.render(data)
   
-assert(result, "Hello Alice!");
+assert(result == "Hello Alice!");
 ```
 
 ## Features
