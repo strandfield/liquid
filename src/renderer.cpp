@@ -200,15 +200,21 @@ json::Json Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
 
 json::Json Renderer::eval_binop(const objects::BinOp & binop)
 {
+  switch (binop.operation)
+  {
+  case objects::BinOp::Or:
+    return evalCondition(eval(binop.lhs)) || evalCondition(eval(binop.rhs));
+  case objects::BinOp::And:
+    return evalCondition(eval(binop.lhs)) && evalCondition(eval(binop.rhs));
+  default:
+    break;
+  }
+
   json::Json lhs = eval(binop.lhs);
   json::Json rhs = eval(binop.rhs);
 
   switch (binop.operation)
   {
-  case objects::BinOp::Or:
-    return evalCondition(lhs) || evalCondition(rhs);
-  case objects::BinOp::And:
-    return evalCondition(lhs) && evalCondition(rhs);
   case objects::BinOp::Equal:
     return lhs == rhs;
   case objects::BinOp::Inequal:
@@ -225,7 +231,8 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
     break;
   }
 
-  throw std::runtime_error{ "TODO" };
+  assert(false);
+  return nullptr;
 }
 
 json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
