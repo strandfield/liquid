@@ -10,6 +10,8 @@
 namespace liquid
 {
 
+class Renderer;
+
 class LIQUID_API Object : public templates::Node
 {
 public:
@@ -17,6 +19,7 @@ public:
   ~Object() = default;
 
   bool isObject() const override { return true; }
+  virtual json::Json accept(Renderer& renderer) = 0;
 };
 
 } // namespace liquid

@@ -116,20 +116,7 @@ bool Renderer::evalCondition(const json::Json& val)
 
 json::Json Renderer::eval(const std::shared_ptr<Object>& obj)
 {
-  if (obj->is<objects::Value>())
-    return eval_value(obj->as<objects::Value>());
-  else if (obj->is<objects::Variable>())
-    return eval_variable(obj->as<objects::Variable>());
-  else if (obj->is<objects::MemberAccess>())
-    return eval_memberaccess(obj->as<objects::MemberAccess>());
-  else if (obj->is<objects::ArrayAccess>())
-    return eval_arrayaccess(obj->as<objects::ArrayAccess>());
-  else if (obj->is<objects::BinOp>())
-    return eval_binop(obj->as<objects::BinOp>());
-  else if (obj->is<objects::Pipe>())
-    return eval_pipe(obj->as<objects::Pipe>());
-  else
-    throw std::runtime_error{ "Not implemented" };
+  return obj->accept(*this);
 }
 
 json::Json Renderer::eval_value(const objects::Value& val)
@@ -358,6 +345,36 @@ void Renderer::visitTag(const tags::Break & tag)
 void Renderer::visitTag(const tags::Continue & tag)
 {
   context().flags() |= Context::Continue;
+}
+
+json::Json Renderer::visitObject(const objects::Value& val)
+{
+  return eval_value(val);
+}
+
+json::Json Renderer::visitObject(const objects::Variable& var)
+{
+  return eval_variable(var);
+}
+
+json::Json Renderer::visitObject(const objects::MemberAccess& ma)
+{
+  return eval_memberaccess(ma);
+}
+
+json::Json Renderer::visitObject(const objects::ArrayAccess& aa)
+{
+  return eval_arrayaccess(aa);
+}
+
+json::Json Renderer::visitObject(const objects::BinOp& binop)
+{
+  return eval_binop(binop);
+}
+
+json::Json Renderer::visitObject(const objects::Pipe& pipe)
+{
+  return eval_pipe(pipe);
 }
 
 } // namespace liquid

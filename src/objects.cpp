@@ -4,6 +4,8 @@
 
 #include "liquid/objects.h"
 
+#include "liquid/renderer.h"
+
 namespace liquid
 {
 
@@ -17,10 +19,20 @@ Value::Value(const json::Json& val)
 
 }
 
+json::Json Value::accept(Renderer& r)
+{
+  return r.visitObject(*this);
+}
+
 Variable::Variable(std::string n)
   : name(std::move(n))
 {
 
+}
+
+json::Json Variable::accept(Renderer& r)
+{
+  return r.visitObject(*this);
 }
 
 ArrayAccess::ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_ptr<Object>& ind)
@@ -30,11 +42,21 @@ ArrayAccess::ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_p
 
 }
 
+json::Json ArrayAccess::accept(Renderer& r)
+{
+  return r.visitObject(*this);
+}
+
 MemberAccess::MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name)
   : object(obj),
   name(name)
 {
 
+}
+
+json::Json MemberAccess::accept(Renderer& r)
+{
+  return r.visitObject(*this);
 }
 
 BinOp::BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right)
@@ -45,12 +67,22 @@ BinOp::BinOp(Operation op, const std::shared_ptr<Object>& left, const std::share
 
 }
 
+json::Json BinOp::accept(Renderer& r)
+{
+  return r.visitObject(*this);
+}
+
 Pipe::Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args)
   : object(object),
   filterName(filtername),
   arguments(args)
 {
 
+}
+
+json::Json Pipe::accept(Renderer& r)
+{
+  return r.visitObject(*this);
 }
 
 } // namespace objects

@@ -45,6 +45,14 @@ public:
   void visitTag(const tags::Break& tag);
   void visitTag(const tags::Continue& tag);
 
+  /* Objects */
+  json::Json visitObject(const objects::Value& val);
+  json::Json visitObject(const objects::Variable& var);
+  json::Json visitObject(const objects::MemberAccess& ma);
+  json::Json visitObject(const objects::ArrayAccess& aa);
+  json::Json visitObject(const objects::BinOp& binop);
+  json::Json visitObject(const objects::Pipe& pipe);
+
 protected:
   void write(const std::string& str);
 

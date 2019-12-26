@@ -21,6 +21,8 @@ public:
   Value(const json::Json& val);
   ~Value() = default;
 
+  json::Json accept(Renderer& r) override;
+
 public:
   json::Json value;
 };
@@ -30,6 +32,8 @@ class Variable : public Object
 public:
   Variable(std::string n);
   ~Variable() = default;
+
+  json::Json accept(Renderer& r) override;
 
 public:
   std::string name;
@@ -41,6 +45,8 @@ public:
   ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_ptr<Object>& ind);
   ~ArrayAccess() = default;
 
+  json::Json accept(Renderer& r) override;
+
 public:
   std::shared_ptr<Object> object;
   std::shared_ptr<Object> index;
@@ -51,6 +57,8 @@ class MemberAccess : public Object
 public:
   MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name);
   ~MemberAccess() = default;
+
+  json::Json accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;
@@ -74,6 +82,8 @@ public:
   BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right);
   ~BinOp() = default;
 
+  json::Json accept(Renderer& r) override;
+
 public:
   Operation operation;
   std::shared_ptr<Object> lhs;
@@ -85,6 +95,8 @@ class Pipe : public Object
 public:
   Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args = {});
   ~Pipe() = default;
+
+  json::Json accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;
