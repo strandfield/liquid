@@ -14,9 +14,6 @@
 namespace liquid
 {
 
-using Char = StringBackend::char_type;
-using StringRef = StringBackend::string_view_type;
-
 struct LIQUID_API Token
 {
   enum Kind {
@@ -39,7 +36,9 @@ struct LIQUID_API Token
   int offset_;
   int length_;
 
-  StringRef toStringRef() const;
+  std::string::const_iterator begin() const;
+  std::string::const_iterator end() const;
+
   std::string toString() const;
 
   bool operator==(const char *str) const;
@@ -54,7 +53,7 @@ public:
 
 protected:
   Token read();
-  inline Char nextChar() const { return peekChar(); }
+  inline char nextChar() const { return peekChar(); }
   bool atEnd() const;
 
   int position() const { return mPosition; }
@@ -63,10 +62,10 @@ protected:
 protected:
   friend struct TokenProducer;
 
-  Char readChar();
-  Char peekChar() const;
+  char readChar();
+  char peekChar() const;
   void seek(int pos);
-  bool isPunctuator(const Char& c) const;
+  bool isPunctuator(const char& c) const;
   bool readSpaces();
   Token produce(Token::Kind k);
 
@@ -79,7 +78,7 @@ private:
   int mPosition;
   int mStartPos;
   std::string mInput;
-  std::set<Char> mPunctuators;
+  std::set<char> mPunctuators;
 };
 
 

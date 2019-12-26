@@ -43,24 +43,39 @@ std::vector<T> mid(const std::vector<T>& list, size_t offset, size_t n = std::nu
 namespace liquid
 {
 
-StringRef Token::toStringRef() const
+std::string::const_iterator Token::begin() const
 {
-  return StringBackend::mid_ref(*text_, offset_, length_);
+  return text_->cbegin() + offset_;
+}
+
+std::string::const_iterator Token::end() const
+{
+  return text_->cbegin() + offset_ + length_;
 }
 
 std::string Token::toString() const
 {
-  return StringBackend::mid(*text_, offset_, length_);
+  return std::string(begin(), end());
 }
 
 bool Token::operator==(const char *str) const
 {
-  return toStringRef() == str;
+  size_t i = 0;
+
+  while (str[i] != '\0' && i < length_)
+  {
+    if (str[i] != text_->at(offset_ + i))
+      return false;
+    else
+      ++i;
+  }
+
+  return str[i] == '\0' && i == length_;
 }
 
 Tokenizer::Tokenizer()
 {
-  mPunctuators = std::set<Char>{ '!', '<', '>', '=' };
+  mPunctuators = std::set<char>{ '!', '<', '>', '=' };
 }
 
 std::vector<Token> Tokenizer::tokenize(const std::string& str)
@@ -87,7 +102,7 @@ Token Tokenizer::read()
 
   mStartPos = position();
 
-  Char c = peekChar();
+  char c = peekChar();
 
   if (c == '|')
     return readChar(), produce(Token::Pipe);
@@ -113,12 +128,12 @@ Token Tokenizer::read()
   throw std::runtime_error{ "Tokenizer::read() : error" };
 }
 
-Char Tokenizer::readChar()
+char Tokenizer::readChar()
 {
   return mInput.at(mPosition++);
 }
 
-Char Tokenizer::peekChar() const
+char Tokenizer::peekChar() const
 {
   return mInput.at(mPosition);
 }
@@ -128,7 +143,7 @@ void Tokenizer::seek(int pos)
   mPosition = std::min(pos, static_cast<int>(input().length()));
 }
 
-bool Tokenizer::isPunctuator(const Char & c) const
+bool Tokenizer::isPunctuator(const char& c) const
 {
   return mPunctuators.find(c) != mPunctuators.end();
 }
@@ -152,7 +167,7 @@ Token Tokenizer::produce(Token::Kind k)
 
 Token Tokenizer::readIdentifier()
 {
-  auto is_valid = [](const Char& c) -> bool {
+  auto is_valid = [](const char& c) -> bool {
     return StringBackend::is_letter_or_number(c) || c == '_';
   };
 
@@ -161,9 +176,9 @@ Token Tokenizer::readIdentifier()
 
   Token ret = produce(Token::Identifier);
 
-  if (ret.toStringRef() == "or" || ret.toStringRef() == "and")
+  if (ret == "or" || ret == "and")
     ret.kind = Token::Operator;
-  else if (ret.toStringRef() == "true" || ret.toStringRef() == "false")
+  else if (ret == "true" || ret == "false")
     ret.kind = Token::BooleanLiteral;
 
   return ret;
@@ -179,7 +194,7 @@ Token Tokenizer::readIntegerLiteral()
 
 Token Tokenizer::readStringLiteral()
 {
-  const Char quote = readChar();
+  const char quote = readChar();
   int index = StringBackend::index_of(quote, input(), position());
   if (index == -1)
     throw std::runtime_error{ "Malformed string literal" };
@@ -192,7 +207,7 @@ Token Tokenizer::readOperator()
 {
   if (peekChar() == '<' || peekChar() == '>' || peekChar() == '=')
   {
-    Char first_char = readChar();
+    char first_char = readChar();
     if (atEnd())
       return produce(Token::Operator);
     else if (peekChar() == '=')
@@ -239,11 +254,11 @@ static json::Json parse_object_create_literal(const Token& tok)
   }
   else if (tok.kind == Token::IntegerLiteral)
   {
-    return json::Json{ StringBackend::to_integer(tok.toString()) };
+    return json::Json{ std::stoi(tok.toString()) };
   }
   else if (tok.kind == Token::StringLiteral)
   {
-    return json::Json(StringBackend::mid(tok.toString(), 1, tok.length_ - 2));
+    return json::Json(std::string(tok.begin() + 1, tok.end() - 1));
   }
   else
   {
