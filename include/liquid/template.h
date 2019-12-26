@@ -41,8 +41,7 @@ public:
 class LIQUID_API TextNode : public Node
 {
 public:
-  TextNode(const std::string& str);
-  TextNode(std::string&& str);
+  TextNode(std::string str);
   ~TextNode() = default;
 
   bool isText() const override;
@@ -62,8 +61,7 @@ public:
 
   typedef templates::Node Node;
 
-  Template(const std::vector<std::shared_ptr<templates::Node>>& nodes);
-  Template(std::vector<std::shared_ptr<templates::Node>>&& nodes);
+  Template(std::vector<std::shared_ptr<templates::Node>> nodes);
 
   const std::vector<std::shared_ptr<templates::Node>>& nodes() const { return mNodes; }
 

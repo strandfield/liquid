@@ -29,9 +29,9 @@ T take_last(std::vector<T>& list)
 }
 
 template<typename T>
-std::vector<T> mid(const std::vector<T>& list, int offset, int n = -1)
+std::vector<T> mid(const std::vector<T>& list, size_t offset, size_t n = std::numeric_limits<size_t>::max())
 {
-  if (n == -1)
+  if (n == std::numeric_limits<size_t>::max())
     n = list.size() - offset;
 
   return std::vector<T>(list.begin() + offset, list.begin() + offset + n);
@@ -325,10 +325,10 @@ static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::
   if (operators.size() == 0)
     return operands.front();
 
-  int op_index = operators.size() - 1;
+  int op_index = static_cast<int>(operators.size()) - 1;
   OpInfo op_info = map.find(operators.back())->second;
 
-  for (int i(operators.size() - 2); i >= 0; --i)
+  for (int i(static_cast<int>(operators.size()) - 2); i >= 0; --i)
   {
     auto it = map.find(operators.at(i));
     if (it->second.precedence > op_info.precedence)
@@ -406,6 +406,7 @@ static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 }
 
 Parser::Parser()
+  : mPosition(-1)
 {
 
 }
@@ -434,14 +435,14 @@ void Parser::readNode()
   if (pos == -1 || pos == document().length() - 1)
   {
     auto ret = std::make_shared<templates::TextNode>(StringBackend::mid(document(), position()));
-    mPosition = document().length();
+    mPosition = static_cast<int>(document().length());
     dispatchNode(ret);
     return;
   }
 
   if (pos == position())
   {
-    if (document().at(pos + 1) == '{')
+    if (document().at(static_cast<size_t>(pos) + 1) == '{')
     {
       pos = pos + 2;
       int endpos = StringBackend::index_of("}}", document(), pos);
@@ -454,7 +455,7 @@ void Parser::readNode()
 
       mPosition = endpos + 2;
     }
-    else if (document().at(pos + 1) == '%')
+    else if (document().at(static_cast<size_t>(pos) + 1) == '%')
     {
       pos = pos + 2;
       int endpos = StringBackend::index_of("%}", document(), pos);
@@ -466,8 +467,9 @@ void Parser::readNode()
 
       mPosition = endpos + 2;
 
-      if (!atEnd() && document().at(position()) == '\n')
-        mPosition += 1;
+      // Strips new-line after a tag
+      //if (!atEnd() && document().at(position()) == '\n')
+      //  mPosition += 1;
     }
     else
     {

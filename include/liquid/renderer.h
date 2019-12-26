@@ -24,10 +24,16 @@ public:
 
   std::string render(const Template& t, const json::Object& data);
 
+  void setStripWhitespacesAtTag(bool on = true);
+  bool stripWhiteSpacesAtTag() const;
+
   json::Json eval(const std::shared_ptr<Object>& obj);
   void process(const std::shared_ptr<Template::Node>& node);
   void process(const std::vector<std::shared_ptr<Template::Node>>& nodes);
   virtual std::string stringify(const json::Json& val);
+
+  static void lstrip(std::string& str);
+  static void rstrip(std::string& str);
 
   static bool evalCondition(const json::Json& val);
 
@@ -53,6 +59,8 @@ protected:
   virtual json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);
 
 private:
+  bool m_strip_whitespace_at_tag;
+  std::shared_ptr<Template::Node> m_last_processed_node;
   Context m_context;
   std::string m_result;
 };

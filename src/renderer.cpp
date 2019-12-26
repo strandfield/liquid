@@ -10,6 +10,7 @@ namespace liquid
 {
 
 Renderer::Renderer()
+  : m_strip_whitespace_at_tag(false)
 {
 
 
@@ -44,14 +45,47 @@ std::string Renderer::render(const Template& t, const json::Object& data)
   return m_result;
 }
 
+void Renderer::setStripWhitespacesAtTag(bool on)
+{
+  m_strip_whitespace_at_tag = on;
+}
+
+bool Renderer::stripWhiteSpacesAtTag() const
+{
+  return m_strip_whitespace_at_tag;
+}
+
 void Renderer::process(const std::shared_ptr<Template::Node>& n)
 {
+  auto last_node = m_last_processed_node;
+  m_last_processed_node = n;
+
   if (n->isText())
-    write(n->as<templates::TextNode>().text);
+  {
+    if (last_node && last_node->isTag() && stripWhiteSpacesAtTag())
+    {
+      std::string text = n->as<templates::TextNode>().text;
+      Renderer::lstrip(text);
+      write(text);
+    }
+    else
+    {
+      write(n->as<templates::TextNode>().text);
+    }
+  }
   else if (n->isObject())
+  {
     write(stringify(eval(std::static_pointer_cast<Object>(n))));
+  }
   else if (n->isTag())
+  {
+    if (last_node && last_node->isText() && stripWhiteSpacesAtTag())
+    {
+      Renderer::rstrip(m_result);
+    }
+
     static_cast<Tag*>(n.get())->accept(*this);
+  }
 }
 
 std::string Renderer::stringify(const json::Json & val)
@@ -132,6 +166,13 @@ json::Json Renderer::eval_memberaccess(const objects::MemberAccess& ma)
   else if (obj.isObject())
   {
     return obj[ma.name];
+  }
+  else if (obj.isString())
+  {
+    if (ma.name == "size" || ma.name == "length")
+      return json::Json(static_cast<int>(obj.toString().size()));
+    else
+      return nullptr;
   }
 
   return nullptr;
@@ -222,6 +263,36 @@ void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes
     if (context().flags() != 0)
       return;
   }
+}
+
+
+inline static bool is_space(char c)
+{
+  return c == ' ' || c == '\r' || c == '\t';
+}
+
+void Renderer::lstrip(std::string& str)
+{
+  size_t i = 0;
+
+  while (i < str.size() && is_space(str.at(i))) ++i;
+
+  if (i < str.size() && str.at(i) == '\n')
+    ++i;
+
+  str.erase(0, i);
+}
+
+void Renderer::rstrip(std::string& str)
+{
+  if (str.empty())
+    return;
+
+  size_t i = str.size();
+
+  while (i > 0 && is_space(str.at(--i)));
+
+  str.erase(is_space(str.at(i)) ? i : i + 1);
 }
 
 void Renderer::visitTag(const Tag& tag)

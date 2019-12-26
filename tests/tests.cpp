@@ -4,6 +4,8 @@
 
 #include "liquid/liquid.h"
 
+#include "liquid/renderer.h"
+
 #include <gtest/gtest.h>
 
 TEST(Liquid, hello) {
@@ -212,4 +214,28 @@ TEST(Liquid, filters) {
   std::string result = tmplt.render<CustomRenderer>(data);
 
   ASSERT_EQ(result, "Hello BOB, your account now contains 10 dollars.");
+}
+
+TEST(Liquid, manual_whitespace_control) {
+
+  std::string str = 
+    "{% assign username = 'John G.Chalmers - Smith' %}\n"
+    "{% if username and username.size > 10 %}\n"
+    "  Wow, {{ username }}, you have a long name!\n"
+    "{% else %}\n"
+    "  Hello there!\n"
+    "{% endif %}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Object data = {};
+  std::string result = tmplt.render(data);
+
+  ASSERT_EQ(result, "\n\n  Wow, John G.Chalmers - Smith, you have a long name!\n");
+
+  liquid::Renderer renderer;
+  renderer.setStripWhitespacesAtTag();
+  result = renderer.render(tmplt, data);
+
+  ASSERT_EQ(result, "  Wow, John G.Chalmers - Smith, you have a long name!\n");
 }

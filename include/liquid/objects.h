@@ -28,8 +28,7 @@ public:
 class Variable : public Object
 {
 public:
-  Variable(const std::string& n);
-  Variable(std::string&& n);
+  Variable(std::string n);
   ~Variable() = default;
 
 public:

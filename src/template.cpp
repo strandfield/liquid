@@ -28,14 +28,7 @@ bool Node::isObject() const
   return false;
 }
 
-
-TextNode::TextNode(const std::string& str)
-  : text(str)
-{
-
-}
-
-TextNode::TextNode(std::string&& str)
+TextNode::TextNode(std::string str)
   : text(std::move(str))
 {
 
@@ -53,13 +46,7 @@ Template::Template()
 
 }
 
-Template::Template(const std::vector<std::shared_ptr<templates::Node>>& nodes)
-  : mNodes(nodes)
-{
-
-}
-
-Template::Template(std::vector<std::shared_ptr<templates::Node>>&& nodes)
+Template::Template(std::vector<std::shared_ptr<templates::Node>> nodes)
   : mNodes(std::move(nodes))
 {
 

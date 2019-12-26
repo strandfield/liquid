@@ -17,13 +17,7 @@ Value::Value(const json::Json& val)
 
 }
 
-Variable::Variable(const std::string& n)
-  : name(n)
-{
-
-}
-
-Variable::Variable(std::string&& n)
+Variable::Variable(std::string n)
   : name(std::move(n))
 {
 
