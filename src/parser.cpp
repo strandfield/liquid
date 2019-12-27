@@ -43,22 +43,43 @@ std::vector<T> mid(const std::vector<T>& list, size_t offset, size_t n = std::nu
 namespace liquid
 {
 
-std::string::const_iterator Token::begin() const
+StringView::StringView()
+  : text_(nullptr),
+  offset_(0),
+  length_(0)
+{
+
+}
+
+StringView::StringView(const std::string* str, size_t off, size_t len)
+  : text_(str),
+  offset_(off),
+  length_(len)
+{
+
+}
+
+std::string::const_iterator StringView::begin() const
 {
   return text_->cbegin() + offset_;
 }
 
-std::string::const_iterator Token::end() const
+std::string::const_iterator StringView::end() const
 {
   return text_->cbegin() + offset_ + length_;
 }
 
-std::string Token::toString() const
+StringView StringView::mid(size_t off, size_t len) const
 {
-  return std::string(begin(), end());
+  return StringView(text_, offset_ + off, std::min(len, length_ - off));
 }
 
-bool Token::operator==(const char *str) const
+char StringView::operator[](size_t off) const
+{
+  return text_->at(offset_ + off);
+}
+
+bool StringView::operator==(const char* str) const
 {
   size_t i = 0;
 
@@ -73,12 +94,23 @@ bool Token::operator==(const char *str) const
   return str[i] == '\0' && i == length_;
 }
 
+std::string Token::toString() const
+{
+  return std::string(text.begin(), text.end());
+}
+
+bool Token::operator==(const char *str) const
+{
+  return text == str;
+}
+
 Tokenizer::Tokenizer()
+  : mPosition(0), mStartPos(0)
 {
   mPunctuators = std::set<char>{ '!', '<', '>', '=' };
 }
 
-std::vector<Token> Tokenizer::tokenize(const std::string& str)
+std::vector<Token> Tokenizer::tokenize(StringView str)
 {
   std::vector<Token> result;
   
@@ -130,27 +162,27 @@ Token Tokenizer::read()
 
 char Tokenizer::readChar()
 {
-  return mInput.at(mPosition++);
+  return mInput[mPosition++];
 }
 
 char Tokenizer::peekChar() const
 {
-  return mInput.at(mPosition);
+  return mInput[mPosition];
 }
 
-void Tokenizer::seek(int pos)
+void Tokenizer::seek(size_t pos)
 {
-  mPosition = std::min(pos, static_cast<int>(input().length()));
+  mPosition = std::min(pos, mInput.length_);
 }
 
-bool Tokenizer::isPunctuator(const char& c) const
+bool Tokenizer::isPunctuator(char c) const
 {
   return mPunctuators.find(c) != mPunctuators.end();
 }
 
 bool Tokenizer::readSpaces()
 {
-  const int offset = position();
+  const size_t offset = position();
 
   while (!atEnd() && (StringBackend::is_space(peekChar()) || StringBackend::is_newline(peekChar())))
     readChar();
@@ -160,14 +192,14 @@ bool Tokenizer::readSpaces()
 
 Token Tokenizer::produce(Token::Kind k)
 {
-  const int pos = position();
+  const size_t pos = position();
   readSpaces();
-  return Token{ k, &mInput, mStartPos, pos - mStartPos };
+  return Token{ k, mInput.mid(mStartPos, pos-mStartPos) };
 }
 
 Token Tokenizer::readIdentifier()
 {
-  auto is_valid = [](const char& c) -> bool {
+  auto is_valid = [](char c) -> bool {
     return StringBackend::is_letter_or_number(c) || c == '_';
   };
 
@@ -195,10 +227,10 @@ Token Tokenizer::readIntegerLiteral()
 Token Tokenizer::readStringLiteral()
 {
   const char quote = readChar();
-  int index = StringBackend::index_of(quote, input(), position());
-  if (index == -1)
+  const size_t index = mInput.text_->find(quote, position() + mInput.offset_);
+  if (index == std::string::npos)
     throw std::runtime_error{ "Malformed string literal" };
-  seek(index);
+  seek(index - mInput.offset_);
   readChar();
   return produce(Token::StringLiteral);
 }
@@ -233,7 +265,7 @@ Token Tokenizer::readOperator()
 
 bool Tokenizer::atEnd() const
 {
-  return mInput.length() == mPosition;
+  return mInput.length_ == mPosition;
 }
 
 static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens);
@@ -258,7 +290,7 @@ static json::Json parse_object_create_literal(const Token& tok)
   }
   else if (tok.kind == Token::StringLiteral)
   {
-    return json::Json(std::string(tok.begin() + 1, tok.end() - 1));
+    return json::Json(std::string(tok.text.begin() + 1, tok.text.end() - 1));
   }
   else
   {
@@ -340,10 +372,10 @@ static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::
   if (operators.size() == 0)
     return operands.front();
 
-  int op_index = static_cast<int>(operators.size()) - 1;
+  size_t op_index = operators.size() - 1;
   OpInfo op_info = map.find(operators.back())->second;
 
-  for (int i(static_cast<int>(operators.size()) - 2); i >= 0; --i)
+  for (size_t i(operators.size() - 1); i-- > 0;)
   {
     auto it = map.find(operators.at(i));
     if (it->second.precedence > op_info.precedence)
@@ -421,7 +453,7 @@ static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 }
 
 Parser::Parser()
-  : mPosition(-1)
+  : mPosition(0)
 {
 
 }
@@ -446,25 +478,28 @@ std::vector<std::shared_ptr<liquid::templates::Node>> Parser::parse(const std::s
 
 void Parser::readNode()
 {
-  int pos = StringBackend::index_of('{', document(), position());
-  if (pos == -1 || pos == document().length() - 1)
+  size_t pos = document().find('{', position());
+  
+  if (pos == std::string::npos || pos == document().length() - 1)
   {
-    auto ret = std::make_shared<templates::TextNode>(StringBackend::mid(document(), position()));
-    mPosition = static_cast<int>(document().length());
+    auto text = std::string(document().begin() + position(), document().end());
+    auto ret = std::make_shared<templates::TextNode>(std::move(text));
+    mPosition = document().length();
     dispatchNode(ret);
     return;
   }
 
   if (pos == position())
   {
-    if (document().at(static_cast<size_t>(pos) + 1) == '{')
+    if (document().at(pos + 1) == '{')
     {
       pos = pos + 2;
-      int endpos = StringBackend::index_of("}}", document(), pos);
-      if(endpos == -1)
+      const size_t endpos = document().find("}}", pos);
+
+      if(endpos == std::string::npos)
         throw std::runtime_error{ "liquid::Parser::dispatchNode() error" };
 
-      auto tokens = tokenizer().tokenize(StringBackend::mid(document(), pos, endpos - pos));
+      auto tokens = tokenizer().tokenize(StringView(&document(), pos, endpos - pos));
       auto obj = parseObject(tokens);
       dispatchNode(obj);
 
@@ -473,11 +508,12 @@ void Parser::readNode()
     else if (document().at(static_cast<size_t>(pos) + 1) == '%')
     {
       pos = pos + 2;
-      int endpos = StringBackend::index_of("%}", document(), pos);
-      if (endpos == -1)
+      size_t endpos = document().find("%}", pos);
+
+      if (endpos == std::string::npos)
         throw std::runtime_error{ "liquid::Parser::dispatchNode() error" };
 
-      auto tokens = tokenizer().tokenize(StringBackend::mid(document(), pos, endpos - pos));
+      auto tokens = tokenizer().tokenize(StringView(&document(), pos, endpos - pos));
       processTag(tokens);
 
       mPosition = endpos + 2;
@@ -488,14 +524,16 @@ void Parser::readNode()
     }
     else
     {
-      auto ret = std::make_shared<templates::TextNode>(StringBackend::mid(document(), position(), pos + 1 - position()));
+      auto text = std::string(document().begin() + position(), document().begin() + (pos + 1));
+      auto ret = std::make_shared<templates::TextNode>(std::move(text));
       mPosition = pos + 1;
       dispatchNode(ret);
     }
   }
   else
   {
-    auto ret = std::make_shared<templates::TextNode>(StringBackend::mid(document(), position(), pos - position()));
+    auto text = std::string(document().begin() + position(), document().begin() + pos);
+    auto ret = std::make_shared<templates::TextNode>(std::move(text));
     mPosition = pos;
     dispatchNode(ret);
     return;

@@ -14,6 +14,31 @@
 namespace liquid
 {
 
+class LIQUID_API StringView
+{
+public:
+  const std::string* text_;
+  size_t offset_;
+  size_t length_;
+
+public:
+  StringView(const StringView&) = default;
+  StringView(StringView&&) noexcept = default;
+  
+  StringView();
+  StringView(const std::string* str, size_t off, size_t len);
+
+  std::string::const_iterator begin() const;
+  std::string::const_iterator end() const;
+
+  StringView mid(size_t off, size_t len = std::numeric_limits<size_t>::max()) const;
+
+  StringView& operator=(const StringView&) = default;
+
+  char operator[](size_t off) const;
+  bool operator==(const char* str) const;
+};
+
 struct LIQUID_API Token
 {
   enum Kind {
@@ -32,12 +57,7 @@ struct LIQUID_API Token
   };
 
   Kind kind;
-  std::string* text_;
-  int offset_;
-  int length_;
-
-  std::string::const_iterator begin() const;
-  std::string::const_iterator end() const;
+  StringView text;
 
   std::string toString() const;
 
@@ -49,23 +69,22 @@ class LIQUID_API Tokenizer
 public:
   Tokenizer();
 
-  std::vector<Token> tokenize(const std::string& str);
+  std::vector<Token> tokenize(StringView str);
 
 protected:
   Token read();
   inline char nextChar() const { return peekChar(); }
   bool atEnd() const;
 
-  int position() const { return mPosition; }
-  const std::string& input() const { return mInput; }
+  size_t position() const { return mPosition; }
 
 protected:
   friend struct TokenProducer;
 
   char readChar();
   char peekChar() const;
-  void seek(int pos);
-  bool isPunctuator(const char& c) const;
+  void seek(size_t pos);
+  bool isPunctuator(char c) const;
   bool readSpaces();
   Token produce(Token::Kind k);
 
@@ -75,9 +94,9 @@ protected:
   Token readOperator();
 
 private:
-  int mPosition;
-  int mStartPos;
-  std::string mInput;
+  size_t mPosition;
+  size_t mStartPos;
+  StringView mInput;
   std::set<char> mPunctuators;
 };
 
@@ -99,7 +118,7 @@ protected:
   std::shared_ptr<liquid::Object> parseObject(std::vector<Token> & tokens);
 
   inline Tokenizer & tokenizer() { return mTokenizer;  }
-  inline int position() const { return mPosition; }
+  inline size_t position() const { return mPosition; }
   inline const std::string& document() const { return mDocument; }
 
 protected:
@@ -117,7 +136,7 @@ protected:
   const std::vector<std::shared_ptr<liquid::templates::Node>>& stack() const { return mStack; }
 
 private:
-  int mPosition;
+  size_t mPosition;
   std::string mDocument;
   Tokenizer mTokenizer;
   std::vector<std::shared_ptr<liquid::templates::Node>> mNodes;
