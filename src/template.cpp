@@ -7,6 +7,9 @@
 #include "liquid/parser.h"
 #include "liquid/renderer.h"
 
+#include <fstream>
+#include <sstream>
+
 namespace liquid
 {
 
@@ -47,8 +50,10 @@ Template::Template()
 
 }
 
-Template::Template(std::vector<std::shared_ptr<templates::Node>> nodes)
-  : mNodes(std::move(nodes))
+Template::Template(std::string src, std::vector<std::shared_ptr<templates::Node>> nodes, std::string filepath)
+  : mFilePath(std::move(filepath)),
+    mSource(std::move(src)),
+    mNodes(std::move(nodes))
 {
 
 }
@@ -58,16 +63,34 @@ Template::~Template()
 
 }
 
+const std::string& Template::filePath() const
+{
+  return mFilePath;
+}
+
+const std::string& Template::source() const
+{
+  return mSource;
+}
+
 std::string Template::render(const json::Object& data) const
 {
   Renderer r;
   return r.render(*this, data);
 }
 
-Template parse(const std::string& str)
+Template parse(const std::string& str, std::string filepath)
 {
   liquid::Parser lp;
-  return Template{ lp.parse(str) };
+  return Template{ str, lp.parse(str), filepath };
+}
+
+Template parseFile(std::string filepath)
+{
+  std::ifstream file{ filepath };
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return liquid::parse(buffer.str(), std::move(filepath));
 }
 
 } // namespace liquid

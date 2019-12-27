@@ -63,12 +63,15 @@ class LIQUID_API Template
 public:
   Template();
   Template(const Template &) = default;
+  Template(Template&&) noexcept = default;
   ~Template();
 
   typedef templates::Node Node;
 
-  Template(std::vector<std::shared_ptr<templates::Node>> nodes);
+  Template(std::string src, std::vector<std::shared_ptr<templates::Node>> nodes, std::string filepath = {});
 
+  const std::string& filePath() const;
+  const std::string& source() const;
   const std::vector<std::shared_ptr<templates::Node>>& nodes() const { return mNodes; }
 
   std::string render(const json::Object& data) const;
@@ -80,11 +83,17 @@ public:
     return renderer.render(*this, data);
   }
 
+  Template& operator=(const Template&) = default;
+  Template& operator=(Template&&) noexcept = default;
+
 private:
+  std::string mFilePath;
+  std::string mSource;
   std::vector<std::shared_ptr<templates::Node>> mNodes;
 };
 
-LIQUID_API Template parse(const std::string& str);
+LIQUID_API Template parse(const std::string& str, std::string filepath = {});
+LIQUID_API Template parseFile(std::string filepath);
 
 } // namespace liquid
 
