@@ -9,11 +9,18 @@
 namespace liquid
 {
 
+Tag::Tag(size_t off)
+  : Node(off)
+{
+
+}
+
 namespace tags
 {
 
-Assign::Assign(const std::string& varname, const std::shared_ptr<Object>& expr)
-  : variable(varname),
+Assign::Assign(const std::string& varname, const std::shared_ptr<Object>& expr, size_t off)
+  : Tag(off), 
+    variable(varname),
     value(expr)
 {
 
@@ -25,8 +32,9 @@ void Assign::accept(Renderer& r)
 }
 
 
-For::For(const std::string& varname, const std::shared_ptr<Object>& expr)
-  : variable(varname),
+For::For(const std::string& varname, const std::shared_ptr<Object>& expr, size_t off)
+  : Tag(off),
+    variable(varname),
     object(expr)
 {
 
@@ -37,21 +45,30 @@ void For::accept(Renderer& r)
   r.visitTag(*this);
 }
 
-Break::Break() { }
+Break::Break(size_t off)
+  : Tag(off)
+{
+
+}
 
 void Break::accept(Renderer& r)
 {
   r.visitTag(*this);
 }
 
-Continue::Continue() { }
+Continue::Continue(size_t off)
+  : Tag(off)
+{
+
+}
 
 void Continue::accept(Renderer& r)
 {
   r.visitTag(*this);
 }
 
-If::If(std::shared_ptr<Object> cond)
+If::If(std::shared_ptr<Object> cond, size_t off)
+  : Tag(off)
 {
   Block b;
   b.condition = cond;

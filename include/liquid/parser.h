@@ -122,15 +122,15 @@ protected:
   inline const std::string& document() const { return mDocument; }
 
 protected:
-  void process_tag_assign(std::vector<Token> & tokens);
-  void process_tag_if(std::vector<Token> & tokens);
-  void process_tag_elsif(std::vector<Token> & tokens);
-  void process_tag_else(std::vector<Token> & tokens);
-  void process_tag_endif(std::vector<Token> & tokens);
-  void process_tag_for(std::vector<Token> & tokens);
-  void process_tag_break(std::vector<Token> & tokens);
-  void process_tag_continue(std::vector<Token> & tokens);
-  void process_tag_endfor(std::vector<Token> & tokens);
+  void process_tag_assign(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_if(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_elsif(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_else(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_endif(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_for(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_break(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_continue(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_endfor(const Token& keyword, std::vector<Token>& tokens);
 
 protected:
   const std::vector<std::shared_ptr<liquid::templates::Node>>& stack() const { return mStack; }

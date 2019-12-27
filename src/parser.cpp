@@ -7,7 +7,6 @@
 #include "liquid/tags.h"
 
 #include <algorithm>
-#include <map>
 
 namespace vec
 {
@@ -270,12 +269,12 @@ bool Tokenizer::atEnd() const
 
 static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens);
 
-static std::string parse_object_read_operator(std::vector<Token>& tokens)
+static Token parse_object_read_operator(std::vector<Token>& tokens)
 {
   Token tok = vec::take_first(tokens);
   if (tok.kind != Token::Operator)
     throw std::runtime_error{ "Bad expression" };
-  return tok.toString();
+  return tok;
 }
 
 static json::Json parse_object_create_literal(const Token& tok)
@@ -309,9 +308,9 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
 
   Token tok = vec::take_first(tokens);
   if (tok.kind == Token::Identifier)
-    obj = std::make_shared<objects::Variable>(tok.toString());
+    obj = std::make_shared<objects::Variable>(tok.toString(), tok.text.offset_);
   else if (tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
-    obj = std::make_shared<objects::Value>(parse_object_create_literal(tok));
+    obj = std::make_shared<objects::Value>(parse_object_create_literal(tok), tok.text.offset_);
   else
     throw std::runtime_error{ "Bad object" };
 
@@ -325,7 +324,7 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
         throw std::runtime_error{ "Bad object" };
 
       tok = vec::take_first(tokens);
-      obj = std::make_shared<objects::MemberAccess>(obj, tok.toString());
+      obj = std::make_shared<objects::MemberAccess>(obj, tok.toString(), tok.text.offset_);
     }
     else if (tokens.front().kind == Token::LeftBracket)
     {
@@ -342,7 +341,7 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
       vec::take_first(tokens);
 
       std::shared_ptr<liquid::Object> index = parse_object(subtokens);
-      obj = std::make_shared<objects::ArrayAccess>(obj, index);
+      obj = std::make_shared<objects::ArrayAccess>(obj, index, tok.text.offset_);
     }
     else
     {
@@ -353,11 +352,11 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
   return obj;
 }
 
-static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<std::string> operators)
+static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<Token> operators)
 {
   struct OpInfo { objects::BinOp::Operation name; int precedence; };
 
-  static std::map<std::string, OpInfo> map{
+  static std::vector<std::pair<std::string, OpInfo>> map{
     { "or", { objects::BinOp::Or, 4 } },
     { "and", { objects::BinOp::And, 3 } },
     { "!=", { objects::BinOp::Inequal, 2 } },
@@ -372,19 +371,27 @@ static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::
   if (operators.size() == 0)
     return operands.front();
 
+  auto get_info = [](const std::vector<std::pair<std::string, OpInfo>>& map, const Token& optok) -> OpInfo
+  {
+    return std::find_if(map.begin(), map.end(), [&optok](const std::pair<std::string, OpInfo>& elem) -> bool {
+      return optok == elem.first.data();
+      })->second;
+  };
+  
   size_t op_index = operators.size() - 1;
-  OpInfo op_info = map.find(operators.back())->second;
+  OpInfo op_info = get_info(map, operators.back());
 
   for (size_t i(operators.size() - 1); i-- > 0;)
   {
-    auto it = map.find(operators.at(i));
-    if (it->second.precedence > op_info.precedence)
-      op_index = i, op_info = it->second;
+    OpInfo temp_op_info = get_info(map, operators.at(i));
+    if (temp_op_info.precedence > op_info.precedence)
+      op_index = i, op_info = temp_op_info;
   }
 
   auto lhs = parse_object_build_expr(vec::mid(operands, 0, op_index + 1), vec::mid(operators, 0, op_index));
   auto rhs = parse_object_build_expr(vec::mid(operands, op_index + 1), vec::mid(operators, op_index + 1));
-  return std::make_shared<objects::BinOp>(op_info.name, lhs, rhs);
+
+  return std::make_shared<objects::BinOp>(op_info.name, lhs, rhs, operators.at(op_index).text.offset_);
 }
 
 static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr<liquid::Object> obj, std::vector<Token>& tokens)
@@ -394,7 +401,7 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
 
   std::string name = tok.toString();
 
-  auto ret = std::make_shared<objects::Pipe>(obj, name);
+  auto ret = std::make_shared<objects::Pipe>(obj, name, tok.text.offset_);
 
   if (tokens.empty() || tokens.front().kind == Token::Pipe)
     return ret;
@@ -424,7 +431,7 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
 static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 {
   if (tokens.size() == 1 && tokens.front().kind == Token::Identifier)
-    return std::make_shared<objects::Variable>(tokens.front().toString());
+    return std::make_shared<objects::Variable>(tokens.front().toString(), tokens.front().text.offset_);
 
   auto obj = parse_object_read_operand(tokens);
 
@@ -433,7 +440,7 @@ static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 
   std::vector<std::shared_ptr<liquid::Object>> operands;
   operands.push_back(obj);
-  std::vector<std::string> operators;
+  std::vector<Token> operators;
 
   while (!tokens.empty() && tokens.front().kind != Token::Pipe)
   {
@@ -483,7 +490,7 @@ void Parser::readNode()
   if (pos == std::string::npos || pos == document().length() - 1)
   {
     auto text = std::string(document().begin() + position(), document().end());
-    auto ret = std::make_shared<templates::TextNode>(std::move(text));
+    auto ret = std::make_shared<templates::TextNode>(std::move(text), position());
     mPosition = document().length();
     dispatchNode(ret);
     return;
@@ -525,7 +532,7 @@ void Parser::readNode()
     else
     {
       auto text = std::string(document().begin() + position(), document().begin() + (pos + 1));
-      auto ret = std::make_shared<templates::TextNode>(std::move(text));
+      auto ret = std::make_shared<templates::TextNode>(std::move(text), position());
       mPosition = pos + 1;
       dispatchNode(ret);
     }
@@ -533,7 +540,7 @@ void Parser::readNode()
   else
   {
     auto text = std::string(document().begin() + position(), document().begin() + pos);
-    auto ret = std::make_shared<templates::TextNode>(std::move(text));
+    auto ret = std::make_shared<templates::TextNode>(std::move(text), position());
     mPosition = pos;
     dispatchNode(ret);
     return;
@@ -563,23 +570,23 @@ void Parser::processTag(std::vector<Token> & tokens)
   Token tok = vec::take_first(tokens);
 
   if (tok == "assign")
-    process_tag_assign(tokens);
+    process_tag_assign(tok, tokens);
   else if (tok == "if")
-    process_tag_if(tokens);
+    process_tag_if(tok, tokens);
   else if (tok == "elsif")
-    process_tag_elsif(tokens);
+    process_tag_elsif(tok, tokens);
   else if (tok == "else")
-    process_tag_else(tokens);
+    process_tag_else(tok, tokens);
   else if (tok == "endif")
-    process_tag_endif(tokens);
+    process_tag_endif(tok, tokens);
   else if (tok == "for")
-    process_tag_for(tokens);
+    process_tag_for(tok, tokens);
   else if (tok == "break")
-    process_tag_break(tokens);
+    process_tag_break(tok, tokens);
   else if (tok == "continue")
-    process_tag_continue(tokens);
+    process_tag_continue(tok, tokens);
   else if (tok == "endfor")
-    process_tag_endfor(tokens);
+    process_tag_endfor(tok, tokens);
   else
     throw std::runtime_error{ "Liquid template: unknown tag" };
 }
@@ -589,25 +596,25 @@ std::shared_ptr<liquid::Object> Parser::parseObject(std::vector<Token> & tokens)
   return parse_object(tokens);
 }
 
-void Parser::process_tag_assign(std::vector<Token> & tokens)
+void Parser::process_tag_assign(const Token& keyword, std::vector<Token>& tokens)
 {
   Token name = vec::take_first(tokens);
   Token eq = vec::take_first(tokens);
 
   auto expr = parseObject(tokens);
 
-  auto node = std::make_shared<tags::Assign>(name.toString(), expr);
+  auto node = std::make_shared<tags::Assign>(name.toString(), expr, keyword.text.offset_);
   dispatchNode(node);
 }
 
-void Parser::process_tag_if(std::vector<Token> & tokens)
+void Parser::process_tag_if(const Token& keyword, std::vector<Token>& tokens)
 {
   auto cond = parseObject(tokens);
-  auto tag = std::make_shared<tags::If>(cond);
+  auto tag = std::make_shared<tags::If>(cond, keyword.text.offset_);
   mStack.push_back(tag);
 }
 
-void Parser::process_tag_elsif(std::vector<Token> & tokens)
+void Parser::process_tag_elsif(const Token& keyword, std::vector<Token>& tokens)
 {
   if (mStack.empty() || !mStack.back()->is<tags::If>())
     throw std::runtime_error{ "Bad elsif" };
@@ -618,7 +625,7 @@ void Parser::process_tag_elsif(std::vector<Token> & tokens)
   mStack.back()->as<tags::If>().blocks.push_back(block);
 }
 
-void Parser::process_tag_else(std::vector<Token> & tokens)
+void Parser::process_tag_else(const Token& keyword, std::vector<Token>& tokens)
 {
   if (mStack.empty() || !mStack.back()->is<tags::If>())
     throw std::runtime_error{ "Bad else" };
@@ -629,7 +636,7 @@ void Parser::process_tag_else(std::vector<Token> & tokens)
   mStack.back()->as<tags::If>().blocks.push_back(block);
 }
 
-void Parser::process_tag_endif(std::vector<Token> & tokens)
+void Parser::process_tag_endif(const Token& keyword, std::vector<Token>& tokens)
 {
   if (mStack.empty() || !mStack.back()->is<tags::If>())
     throw std::runtime_error{ "Bad endif" };
@@ -639,7 +646,7 @@ void Parser::process_tag_endif(std::vector<Token> & tokens)
   dispatchNode(node);
 }
 
-void Parser::process_tag_for(std::vector<Token> & tokens)
+void Parser::process_tag_for(const Token& keyword, std::vector<Token>& tokens)
 {
   std::string name = vec::take_first(tokens).toString();
 
@@ -649,21 +656,21 @@ void Parser::process_tag_for(std::vector<Token> & tokens)
 
   auto container = parseObject(tokens);
 
-  auto tag = std::make_shared<tags::For>(name, container);
+  auto tag = std::make_shared<tags::For>(name, container, keyword.text.offset_);
   mStack.push_back(tag);
 }
 
-void Parser::process_tag_break(std::vector<Token> & tokens)
+void Parser::process_tag_break(const Token& keyword, std::vector<Token>& tokens)
 {
-  dispatchNode(std::make_shared<tags::Break>());
+  dispatchNode(std::make_shared<tags::Break>(keyword.text.offset_));
 }
 
-void Parser::process_tag_continue(std::vector<Token> & tokens)
+void Parser::process_tag_continue(const Token& keyword, std::vector<Token>& tokens)
 {
-  dispatchNode(std::make_shared<tags::Continue>());
+  dispatchNode(std::make_shared<tags::Continue>(keyword.text.offset_));
 }
 
-void Parser::process_tag_endfor(std::vector<Token> & tokens)
+void Parser::process_tag_endfor(const Token& keyword, std::vector<Token>& tokens)
 {
   if (mStack.empty() || !mStack.back()->is<tags::For>())
     throw std::runtime_error{ "Bad endfor" };

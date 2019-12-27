@@ -15,7 +15,7 @@ class Renderer;
 class LIQUID_API Object : public templates::Node
 {
 public:
-  Object() = default;
+  explicit Object(size_t off = std::numeric_limits<size_t>::max());
   ~Object() = default;
 
   bool isObject() const override { return true; }

@@ -18,7 +18,7 @@ namespace objects
 class Value : public Object
 {
 public:
-  Value(const json::Json& val);
+  Value(const json::Json& val, size_t off = std::numeric_limits<size_t>::max());
   ~Value() = default;
 
   json::Json accept(Renderer& r) override;
@@ -30,7 +30,7 @@ public:
 class Variable : public Object
 {
 public:
-  Variable(std::string n);
+  Variable(std::string n, size_t off = std::numeric_limits<size_t>::max());
   ~Variable() = default;
 
   json::Json accept(Renderer& r) override;
@@ -42,7 +42,7 @@ public:
 class ArrayAccess : public Object
 {
 public:
-  ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_ptr<Object>& ind);
+  ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_ptr<Object>& ind, size_t off = std::numeric_limits<size_t>::max());
   ~ArrayAccess() = default;
 
   json::Json accept(Renderer& r) override;
@@ -55,7 +55,7 @@ public:
 class MemberAccess : public Object
 {
 public:
-  MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name);
+  MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name, size_t off = std::numeric_limits<size_t>::max());
   ~MemberAccess() = default;
 
   json::Json accept(Renderer& r) override;
@@ -79,7 +79,7 @@ public:
     Or
   };
 
-  BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right);
+  BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right, size_t off = std::numeric_limits<size_t>::max());
   ~BinOp() = default;
 
   json::Json accept(Renderer& r) override;
@@ -93,7 +93,8 @@ public:
 class Pipe : public Object
 {
 public:
-  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args = {});
+  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args = {}, size_t off = std::numeric_limits<size_t>::max());
+  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, size_t off = std::numeric_limits<size_t>::max());
   ~Pipe() = default;
 
   json::Json accept(Renderer& r) override;

@@ -20,7 +20,7 @@ namespace tags
 class Assign : public Tag
 {
 public:
-  Assign(const std::string& varname, const std::shared_ptr<Object> & expr);
+  Assign(const std::string& varname, const std::shared_ptr<Object> & expr, size_t off = std::numeric_limits<size_t>::max());
   ~Assign() = default;
 
   void accept(Renderer& r);
@@ -33,7 +33,7 @@ public:
 class For : public Tag
 {
 public:
-  For(const std::string& varname, const std::shared_ptr<Object> & expr);
+  For(const std::string& varname, const std::shared_ptr<Object> & expr, size_t off = std::numeric_limits<size_t>::max());
   ~For() = default;
 
   void accept(Renderer& r);
@@ -47,7 +47,7 @@ public:
 class Break : public Tag
 {
 public:
-  Break();
+  explicit Break(size_t off = std::numeric_limits<size_t>::max());
   ~Break() = default;
 
   void accept(Renderer& r);
@@ -56,7 +56,7 @@ public:
 class Continue : public Tag
 {
 public:
-  Continue();
+  explicit Continue(size_t off = std::numeric_limits<size_t>::max());
   ~Continue() = default;
 
   void accept(Renderer& r);
@@ -71,7 +71,7 @@ public:
     std::vector<std::shared_ptr<templates::Node>> body;
   };
 
-  If(std::shared_ptr<Object> cond);
+  If(std::shared_ptr<Object> cond, size_t off = std::numeric_limits<size_t>::max());
   ~If() = default;
 
   void accept(Renderer& r);

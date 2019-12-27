@@ -21,8 +21,9 @@ namespace templates
 class LIQUID_API Node
 {
 public:
-  Node() = default;
   virtual ~Node() = default;
+
+  Node(size_t off = std::numeric_limits<size_t>::max()) : m_offset(off) { }
 
   template<typename T>
   bool is() const { return dynamic_cast<const T*>(this) != nullptr; }
@@ -36,12 +37,17 @@ public:
   virtual bool isText() const;
   virtual bool isTag() const;
   virtual bool isObject() const;
+
+  size_t offset() const { return m_offset; }
+
+private:
+  size_t m_offset;
 };
 
 class LIQUID_API TextNode : public Node
 {
 public:
-  TextNode(std::string str);
+  TextNode(std::string str, size_t off = std::numeric_limits<size_t>::max());
   ~TextNode() = default;
 
   bool isText() const override;

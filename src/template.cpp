@@ -28,8 +28,9 @@ bool Node::isObject() const
   return false;
 }
 
-TextNode::TextNode(std::string str)
-  : text(std::move(str))
+TextNode::TextNode(std::string str, size_t off)
+  : Node(off),
+    text(std::move(str))
 {
 
 }
