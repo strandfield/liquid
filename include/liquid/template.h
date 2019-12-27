@@ -9,7 +9,9 @@
 
 #include <json-toolkit/json.h>
 
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace liquid
