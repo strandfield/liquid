@@ -28,29 +28,6 @@ public:
     return lhs.compare(rhs);
   }
 
-  static int index_of(char_type c, const string_type& str, int from = 0) 
-  { 
-    size_t index = str.find(c, from);
-    return index == std::string::npos ? -1 : static_cast<int>(index);
-  }
-
-  static int index_of(const string_type& pattern, const string_type& str, int from = 0)
-  {
-    size_t index = str.find(pattern, from);
-    return index == std::string::npos ? -1 : static_cast<int>(index);
-  }
-
-  static string_view_type mid_ref(const string_type& str, int offset, int length)
-  {
-    return std::string(str.begin() + offset, str.begin() + offset + length);
-  }
-
-  static string_type mid(const string_type& str, int offset, int length = -1)
-  {
-    length = length != -1 ? length : str.size() - offset;
-    return std::string(str.begin() + offset, str.begin() + offset + length);
-  }
-
   static string_type normalize(const string_type& str)
   {
     std::string result = str;

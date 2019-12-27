@@ -42,6 +42,18 @@ std::vector<T> mid(const std::vector<T>& list, size_t offset, size_t n = std::nu
 namespace liquid
 {
 
+ParserException::ParserException(size_t off, const std::string& mssg)
+  : offset_(off),
+    message_(mssg)
+{
+
+}
+
+const char* ParserException::what() const noexcept
+{
+  return "liquid::Parser parsing error";
+}
+
 StringView::StringView()
   : text_(nullptr),
   offset_(0),
@@ -128,7 +140,7 @@ Token Tokenizer::read()
 {
   if (atEnd())
   {
-    throw std::runtime_error{ "Unexpected end of input" };
+    throw ParserException{ mInput.offset_ + position(), "Unexpected end of input" };
   }
 
   mStartPos = position();
@@ -155,8 +167,8 @@ Token Tokenizer::read()
     return readIdentifier();
   else if (isPunctuator(c))
     return readOperator();
-
-  throw std::runtime_error{ "Tokenizer::read() : error" };
+  
+  throw ParserException{ mInput.offset_ + position(), std::string("Unexpected input '") + c + std::string("'") };
 }
 
 char Tokenizer::readChar()
@@ -227,8 +239,10 @@ Token Tokenizer::readStringLiteral()
 {
   const char quote = readChar();
   const size_t index = mInput.text_->find(quote, position() + mInput.offset_);
+
   if (index == std::string::npos)
-    throw std::runtime_error{ "Malformed string literal" };
+    throw ParserException{ mInput.offset_ + position(), std::string("Marlformed string literal") };
+
   seek(index - mInput.offset_);
   readChar();
   return produce(Token::StringLiteral);
@@ -272,13 +286,17 @@ static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens);
 static Token parse_object_read_operator(std::vector<Token>& tokens)
 {
   Token tok = vec::take_first(tokens);
+
   if (tok.kind != Token::Operator)
-    throw std::runtime_error{ "Bad expression" };
+    throw ParserException{ tok.text.offset_ , std::string("Expected operator") };
+
   return tok;
 }
 
-static json::Json parse_object_create_literal(const Token& tok)
+static json::Json parse_object_create_literal(const Token& tok) noexcept
 {
+  assert(tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral);
+
   if (tok.kind == Token::BooleanLiteral)
   {
     return json::Json{ tok == "true" };
@@ -287,18 +305,15 @@ static json::Json parse_object_create_literal(const Token& tok)
   {
     return json::Json{ std::stoi(tok.toString()) };
   }
-  else if (tok.kind == Token::StringLiteral)
+  else // tok.kind == Token::StringLiteral
   {
     return json::Json(std::string(tok.text.begin() + 1, tok.text.end() - 1));
   }
-  else
-  {
-    throw std::runtime_error{ "Bad literal" };
-  }
 }
 
-static json::Json parse_object_read_literal(std::vector<Token>& tokens)
+static json::Json parse_object_read_literal(std::vector<Token>& tokens) noexcept
 {
+  assert(!tokens.empty());
   return parse_object_create_literal(vec::take_first(tokens));
 }
 
@@ -307,12 +322,13 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
   std::shared_ptr<liquid::Object> obj;
 
   Token tok = vec::take_first(tokens);
+
   if (tok.kind == Token::Identifier)
     obj = std::make_shared<objects::Variable>(tok.toString(), tok.text.offset_);
   else if (tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
     obj = std::make_shared<objects::Value>(parse_object_create_literal(tok), tok.text.offset_);
   else
-    throw std::runtime_error{ "Bad object" };
+    throw ParserException{ tok.text.offset_, "Expected operand" };
 
   while (!tokens.empty())
   {
@@ -321,24 +337,28 @@ static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Tok
       vec::take_first(tokens);
 
       if (tokens.empty() || tokens.front().kind != Token::Identifier)
-        throw std::runtime_error{ "Bad object" };
+        throw ParserException{ tokens.front().text.offset_, "Expected identifier after '.'" };
 
       tok = vec::take_first(tokens);
       obj = std::make_shared<objects::MemberAccess>(obj, tok.toString(), tok.text.offset_);
     }
     else if (tokens.front().kind == Token::LeftBracket)
     {
-      vec::take_first(tokens);
+      const Token left_bracket = vec::take_first(tokens);
       std::vector<Token> subtokens;
+
       while (!tokens.empty() && tokens.front().kind != Token::RightBracket)
       {
         subtokens.push_back(vec::take_first(tokens));
       }
 
       if (tokens.empty())
-        throw std::runtime_error{ "Bad array" };
+        throw ParserException{ left_bracket.text.offset_, "Could not find closing bracket ']'" };
 
       vec::take_first(tokens);
+
+      if(subtokens.empty())
+        throw ParserException{ left_bracket.text.offset_, "Invalid empty index in array access" };
 
       std::shared_ptr<liquid::Object> index = parse_object(subtokens);
       obj = std::make_shared<objects::ArrayAccess>(obj, index, tok.text.offset_);
@@ -407,7 +427,7 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
     return ret;
 
   if (tokens.front().kind != Token::Colon)
-    throw std::runtime_error{ "Bad filter" };
+    throw ParserException{ tokens.front().text.offset_, "Expected ':' after filter name" };
 
   vec::take_first(tokens);
 
@@ -419,7 +439,7 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
       break;
 
     if (tokens.front().kind != Token::Comma)
-      throw std::runtime_error{ "Bad filter, expected comma" };
+      throw ParserException{ tokens.front().text.offset_, "Expected ',' or '|' or end of filter expression" };
 
     // read the comma
     vec::take_first(tokens);
@@ -430,6 +450,8 @@ static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr
 
 static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
 {
+  assert(!tokens.empty());
+
   if (tokens.size() == 1 && tokens.front().kind == Token::Identifier)
     return std::make_shared<objects::Variable>(tokens.front().toString(), tokens.front().text.offset_);
 
@@ -503,8 +525,8 @@ void Parser::readNode()
       pos = pos + 2;
       const size_t endpos = document().find("}}", pos);
 
-      if(endpos == std::string::npos)
-        throw std::runtime_error{ "liquid::Parser::dispatchNode() error" };
+      if (endpos == std::string::npos)
+        throw ParserException{ pos, "Could not match '{{' with a closing '}}'" };
 
       auto tokens = tokenizer().tokenize(StringView(&document(), pos, endpos - pos));
       auto obj = parseObject(tokens);
@@ -518,7 +540,7 @@ void Parser::readNode()
       size_t endpos = document().find("%}", pos);
 
       if (endpos == std::string::npos)
-        throw std::runtime_error{ "liquid::Parser::dispatchNode() error" };
+        throw ParserException{ pos, "Could not match '{%' with a closing '%}'" };
 
       auto tokens = tokenizer().tokenize(StringView(&document(), pos, endpos - pos));
       processTag(tokens);
@@ -549,19 +571,23 @@ void Parser::readNode()
 
 void Parser::dispatchNode(std::shared_ptr<liquid::templates::Node> n)
 {
-  if (mStack.empty())
+  if (stack().empty())
   {
     mNodes.push_back(n);
   }
   else
   {
-    auto top = mStack.back();
-    if (top->is<tags::For>())
+    auto top = stack().back();
+
+    const bool is_for = top->is<tags::For>();
+    const bool is_if = !is_for && top->is<tags::If>();
+
+    assert(is_for || is_if);
+
+    if (is_for)
       top->as<tags::For>().body.push_back(n);
-    else if (top->is<tags::If>())
+    else if (is_if)
       top->as<tags::If>().blocks.back().body.push_back(n);
-    else
-      throw std::runtime_error{ "liquid::Parser::dispatchNode() error" };
   }
 }
 
@@ -588,7 +614,7 @@ void Parser::processTag(std::vector<Token> & tokens)
   else if (tok == "endfor")
     process_tag_endfor(tok, tokens);
   else
-    throw std::runtime_error{ "Liquid template: unknown tag" };
+    throw ParserException{ tok.text.offset_, "Unknown tag name" };
 }
 
 std::shared_ptr<liquid::Object> Parser::parseObject(std::vector<Token> & tokens)
@@ -616,30 +642,30 @@ void Parser::process_tag_if(const Token& keyword, std::vector<Token>& tokens)
 
 void Parser::process_tag_elsif(const Token& keyword, std::vector<Token>& tokens)
 {
-  if (mStack.empty() || !mStack.back()->is<tags::If>())
-    throw std::runtime_error{ "Bad elsif" };
+  if (stack().empty() || !stack().back()->is<tags::If>())
+    throw ParserException{ keyword.text.offset_, "Unexpected 'elsif' tag" };
 
   tags::If::Block block;
   block.condition = parseObject(tokens);
 
-  mStack.back()->as<tags::If>().blocks.push_back(block);
+  stack().back()->as<tags::If>().blocks.push_back(block);
 }
 
 void Parser::process_tag_else(const Token& keyword, std::vector<Token>& tokens)
 {
-  if (mStack.empty() || !mStack.back()->is<tags::If>())
-    throw std::runtime_error{ "Bad else" };
+  if (stack().empty() || !stack().back()->is<tags::If>())
+    throw ParserException{ keyword.text.offset_, "Unexpected 'else' tag" };
 
   tags::If::Block block;
   block.condition = std::make_shared<objects::Value>(json::Json(true));
 
-  mStack.back()->as<tags::If>().blocks.push_back(block);
+  stack().back()->as<tags::If>().blocks.push_back(block);
 }
 
 void Parser::process_tag_endif(const Token& keyword, std::vector<Token>& tokens)
 {
-  if (mStack.empty() || !mStack.back()->is<tags::If>())
-    throw std::runtime_error{ "Bad endif" };
+  if (stack().empty() || !stack().back()->is<tags::If>())
+    throw ParserException{ keyword.text.offset_, "Unexpected 'endif' tag" };
 
   auto node = vec::take_last(mStack);
   assert(node->is<tags::If>());
@@ -651,8 +677,9 @@ void Parser::process_tag_for(const Token& keyword, std::vector<Token>& tokens)
   std::string name = vec::take_first(tokens).toString();
 
   std::string in = vec::take_first(tokens).toString();
+
   if (in != "in")
-    throw std::runtime_error{ "Bad for" };
+    throw ParserException{ keyword.text.offset_, "Expected token 'in'" };
 
   auto container = parseObject(tokens);
 
@@ -672,8 +699,8 @@ void Parser::process_tag_continue(const Token& keyword, std::vector<Token>& toke
 
 void Parser::process_tag_endfor(const Token& keyword, std::vector<Token>& tokens)
 {
-  if (mStack.empty() || !mStack.back()->is<tags::For>())
-    throw std::runtime_error{ "Bad endfor" };
+  if (stack().empty() || !stack().back()->is<tags::For>())
+    throw ParserException{ keyword.text.offset_, "Unexpected 'endfor' tag" };
 
   auto node = vec::take_last(mStack);
   assert(node->is<tags::For>());

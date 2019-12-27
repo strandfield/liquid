@@ -83,6 +83,9 @@ public:
     return renderer.render(*this, data);
   }
 
+  std::pair<int, int> linecol(size_t off) const;
+  std::string getLine(size_t off) const;
+
   Template& operator=(const Template&) = default;
   Template& operator=(Template&&) noexcept = default;
 

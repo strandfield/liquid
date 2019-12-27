@@ -5,6 +5,7 @@
 #ifndef LIQUID_PARSER_H
 #define LIQUID_PARSER_H
 
+#include "liquid/errors.h"
 #include "liquid/objects.h"
 #include "liquid/template.h"
 
@@ -13,6 +14,18 @@
 
 namespace liquid
 {
+
+class LIQUID_API ParserException : public Exception
+{
+public:
+  size_t offset_;
+  std::string message_;
+
+public:
+  ParserException(size_t off, const std::string& mssg);
+
+  const char* what() const noexcept override;
+};
 
 class LIQUID_API StringView
 {

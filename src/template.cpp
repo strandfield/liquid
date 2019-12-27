@@ -79,6 +79,39 @@ std::string Template::render(const json::Object& data) const
   return r.render(*this, data);
 }
 
+std::pair<int, int> Template::linecol(size_t off) const
+{
+  int line = 0;
+
+  for (size_t i(0); i < off; ++i)
+  {
+    line += source().at(i) == '\n' ? 1 : 0;
+  }
+
+  int col = 0;
+
+  while (off > 0 && source().at(off - 1) != '\n')
+  {
+    --off;
+    ++col;
+  }
+
+  return { line, col };
+}
+
+std::string Template::getLine(size_t off) const
+{
+  size_t begin = off;
+
+  while (begin > 0 && source().at(begin-1) != '\n') --begin;
+
+  size_t end = off;
+
+  while (end < source().size() && source().at(end) != '\n') ++end;
+
+  return std::string(source().begin() + begin, source().begin() + end);
+}
+
 Template parse(const std::string& str, std::string filepath)
 {
   liquid::Parser lp;

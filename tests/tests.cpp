@@ -239,3 +239,20 @@ TEST(Liquid, manual_whitespace_control) {
 
   ASSERT_EQ(result, "  Wow, John G.Chalmers - Smith, you have a long name!\n");
 }
+
+TEST(Liquid, error) {
+
+  std::string str = "{% assign age = 20 %}{{ age.bad_property }}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  liquid::Renderer renderer;
+  json::Object data = {};
+  std::string result = renderer.render(tmplt, data);
+
+  ASSERT_TRUE(result.find("{!") == 0);
+
+  ASSERT_TRUE(!renderer.errors().empty());
+
+  ASSERT_EQ(tmplt.getLine(renderer.errors().front().offset), "{% assign age = 20 %}{{ age.bad_property }}");
+}

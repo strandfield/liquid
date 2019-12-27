@@ -6,11 +6,33 @@
 
 #include "liquid/context.h"
 
+#include <json-toolkit/stringify.h>
+
 namespace liquid
 {
 
+EvaluationException::EvaluationException(const std::string& mssg, size_t off)
+  : offset_(off),
+    message_(mssg)
+{
+
+}
+
+const char* EvaluationException::what() const noexcept
+{
+  return "liquid::Renderer evaluation error";
+}
+
+Renderer::Error::Error(size_t off, std::string mssg)
+  : offset(off),
+   message(std::move(mssg))
+{
+
+}
+
 Renderer::Renderer()
-  : m_strip_whitespace_at_tag(false)
+  : m_template(nullptr),
+    m_strip_whitespace_at_tag(false)
 {
 
 
@@ -24,6 +46,8 @@ Renderer::~Renderer()
 void Renderer::reset()
 {
   m_result.clear();
+  m_errors.clear();
+  m_template = nullptr;
   context().scopes().clear();
   context().scopes().emplace_back();
   context().flags() = 0;
@@ -34,13 +58,35 @@ Context& Renderer::context()
   return m_context;
 }
 
+const std::vector<Renderer::Error>& Renderer::errors() const
+{
+  return m_errors;
+}
+
+const Template& Renderer::model() const
+{
+  assert(m_template != nullptr);
+  return *m_template;
+}
+
 std::string Renderer::render(const Template& t, const json::Object& data)
 {
   reset();
+
+  m_template = &t;
   context().currentScope().data = data;
 
-  for (auto n : t.nodes())
-    process(n);
+  try
+  {
+    for (auto n : t.nodes())
+      process(n);
+  }
+  catch (const EvaluationException& ex)
+  {
+    log(ex);
+  }
+
+  m_template = nullptr;
 
   return m_result;
 }
@@ -99,13 +145,26 @@ std::string Renderer::stringify(const json::Json & val)
     return StringBackend::from_integer(val.toInt());
   else if (val.isNumber())
     return StringBackend::from_number(val.toNumber());
-
-  throw std::runtime_error("Renderer::stringify() : could not convert to string");
+  else
+    return json::stringify(val);
 }
 
 void Renderer::write(const std::string& str)
 {
   m_result += str;
+}
+
+void Renderer::record(const EvaluationException& ex)
+{
+  m_errors.emplace_back(ex.offset_, ex.message_);
+}
+
+void Renderer::log(const EvaluationException& ex)
+{
+  record(ex);
+
+  std::pair<int, int> linecol = model().linecol(ex.offset_);
+  write("{! " + std::to_string(linecol.first) + ":" + std::to_string(linecol.second) + ": " + ex.message_ + " !}");
 }
 
 bool Renderer::evalCondition(const json::Json& val)
@@ -161,40 +220,34 @@ json::Json Renderer::eval_memberaccess(const objects::MemberAccess& ma)
     else
       return nullptr;
   }
-
-  return nullptr;
+  else
+  {
+    throw EvaluationException{ "Value does not support member access", ma.object->offset() };
+  }
 }
 
 json::Json Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
 {
-  json::Json obj = eval(aa.object);
-  json::Json index = eval(aa.index);
+  const json::Json obj = eval(aa.object);
+  const json::Json index = eval(aa.index);
 
   if (index.isInteger())
   {
-    if (obj.isArray())
-    {
-      return obj.at(index.toInt());
-    }
-    else
-    {
-      return nullptr;
-    }
+    if (!obj.isArray())
+      throw EvaluationException{ "Value is not an array", aa.object->offset() };
+
+    return obj.at(index.toInt());
   }
   else if (index.isString())
   {
-    if (obj.isObject())
-    {
-      return obj[index.toString()];
-    }
-    else
-    {
-      return nullptr;
-    }
+    if (!obj.isObject())
+      throw EvaluationException{ "Value is not an object", aa.object->offset() };
+
+    return obj[index.toString()];
   }
   else
   {
-    throw std::runtime_error{ "Bad array access" };
+    throw EvaluationException{ "Index must be a 'string' or an 'int'", aa.index->offset() };
   }
 }
 
@@ -210,8 +263,8 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
     break;
   }
 
-  json::Json lhs = eval(binop.lhs);
-  json::Json rhs = eval(binop.rhs);
+  const json::Json lhs = eval(binop.lhs);
+  const json::Json rhs = eval(binop.rhs);
 
   switch (binop.operation)
   {
@@ -240,12 +293,20 @@ json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
   json::Json obj = eval(pipe.object);
   std::vector<json::Json> args = pipe.arguments;
 
-  return applyFilter(pipe.filterName, obj, args);
+  try
+  {
+    return applyFilter(pipe.filterName, obj, args);
+  }
+  catch (EvaluationException& ex)
+  {
+    ex.offset_ = pipe.offset();
+    throw;
+  }
 }
 
 json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
 {
-  throw std::runtime_error("Unknown filter");
+  throw EvaluationException{ "Invalid filter name '" + name + "'" };
 }
 
 void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes)
@@ -259,13 +320,12 @@ void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes
   }
 }
 
-
 inline static bool is_space(char c)
 {
   return c == ' ' || c == '\r' || c == '\t';
 }
 
-void Renderer::lstrip(std::string& str)
+void Renderer::lstrip(std::string& str) noexcept
 {
   size_t i = 0;
 
@@ -277,7 +337,7 @@ void Renderer::lstrip(std::string& str)
   str.erase(0, i);
 }
 
-void Renderer::rstrip(std::string& str)
+void Renderer::rstrip(std::string& str) noexcept
 {
   if (str.empty())
     return;
@@ -287,11 +347,6 @@ void Renderer::rstrip(std::string& str)
   while (i > 0 && is_space(str.at(--i)));
 
   str.erase(is_space(str.at(i)) ? i : i + 1);
-}
-
-void Renderer::visitTag(const Tag& tag)
-{
-  throw std::runtime_error("Unsupported tag");
 }
 
 void Renderer::visitTag(const tags::Assign & assign)
