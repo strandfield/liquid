@@ -23,7 +23,7 @@ matrix:
       - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 ..
       - make
       - cd tests
-      - ./tests --gtest_output="xml:gtest-report.xml"
+      - ./TEST_liquid --gtest_output="xml:gtest-report.xml"
   - os: linux
     env:
       - TEST="Codecov"
