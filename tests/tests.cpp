@@ -273,25 +273,49 @@ TEST(Liquid, filters) {
 
 TEST(Liquid, manual_whitespace_control) {
 
-  std::string str = 
-    "{% assign username = 'John G.Chalmers - Smith' %}\n"
-    "{% if username and username.size > 10 %}\n"
-    "  Wow, {{ username }}, you have a long name!\n"
-    "{% else %}\n"
-    "  Hello there!\n"
-    "{% endif %}";
+  {
+    std::string str =
+      "{% assign username = 'John G.Chalmers - Smith' %}\n"
+      "{% if username and username.size > 10 %}\n"
+      "  Wow, {{ username }}, you have a long name!\n"
+      "{% else %}\n"
+      "  Hello there!\n"
+      "{% endif %}";
 
-  liquid::Template tmplt = liquid::parse(str);
+    liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
-  std::string result = tmplt.render(data);
+    json::Object data = {};
+    std::string result = tmplt.render(data);
 
-  ASSERT_EQ(result, "\n\n  Wow, John G.Chalmers - Smith, you have a long name!\n");
+    ASSERT_EQ(result, "\n\n  Wow, John G.Chalmers - Smith, you have a long name!\n");
 
-  tmplt.stripWhitespacesAtTag();
-  result = tmplt.render(data);
+    tmplt.stripWhitespacesAtTag();
+    result = tmplt.render(data);
 
-  ASSERT_EQ(result, "Wow, John G.Chalmers - Smith, you have a long name!\n");
+    ASSERT_EQ(result, "Wow, John G.Chalmers - Smith, you have a long name!\n");
+  }
+
+  {
+    std::string str =
+      "{% for p in people %}\n"
+      "  - {{ p }}\n"
+      "{% endfor %}\n"
+      "{% for p in people %}\n"
+      "{{''}}  - {{ p }}\n"
+      "{% endfor %}\n";
+
+    liquid::Template tmplt = liquid::parse(str);
+
+    json::Object data = {};
+    data["people"] = json::Array();
+    data["people"].push("Bob");
+    data["people"].push("Alice");
+
+    tmplt.stripWhitespacesAtTag();
+    std::string result = tmplt.render(data);
+
+    ASSERT_EQ(result, "- Bob\n- Alice\n  - Bob\n  - Alice\n");
+  }
 }
 
 TEST(Liquid, error) {
