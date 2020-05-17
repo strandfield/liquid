@@ -193,6 +193,27 @@ TEST(Liquid, eject) {
   ASSERT_EQ(result, "1234");
 }
 
+TEST(Liquid, discard) {
+
+  std::string str = "{% for n in numbers %}{% if n == 5 %}{% discard %}{% endif %}{{ n }}{% endfor %}bye";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Array numbers;
+  numbers.push(1);
+  numbers.push(2);
+  numbers.push(3);
+  numbers.push(4);
+  numbers.push(5);
+  numbers.push(6);
+  numbers.push(7);
+  json::Object data = {};
+  data["numbers"] = numbers;
+  std::string result = tmplt.render(data);
+
+  ASSERT_EQ(result, "");
+}
+
 #include "liquid/renderer.h"
 #include "liquid/filter.h"
 

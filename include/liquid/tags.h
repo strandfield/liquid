@@ -98,6 +98,15 @@ public:
   void accept(Renderer& r);
 };
 
+class Discard : public Tag
+{
+public:
+  Discard();
+  ~Discard() = default;
+
+  void accept(Renderer& r);
+};
+
 } // tags
 
 } // namespace liquid

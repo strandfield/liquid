@@ -95,6 +95,9 @@ std::string Renderer::render(const Template& t, const json::Object& data)
 
   if (context().flags() & Context::Eject)
   {
+    if (context().flags() == Context::Discard)
+      m_result.clear();
+
     context().flags() = 0;
   }
 
@@ -429,6 +432,11 @@ void Renderer::visitTag(const tags::Continue & tag)
 void Renderer::visitTag(const tags::Eject& tag)
 {
   context().flags() |= Context::Eject;
+}
+
+void Renderer::visitTag(const tags::Discard& tag)
+{
+  context().flags() |= Context::Discard;
 }
 
 json::Json Renderer::visitObject(const objects::Value& val)

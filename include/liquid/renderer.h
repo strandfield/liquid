@@ -73,6 +73,7 @@ public:
   void visitTag(const tags::Break& tag);
   void visitTag(const tags::Continue& tag);
   void visitTag(const tags::Eject& tag);
+  void visitTag(const tags::Discard& tag);
 
   /* Objects */
   json::Json visitObject(const objects::Value& val);

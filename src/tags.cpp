@@ -100,6 +100,17 @@ void Eject::accept(Renderer& r)
   r.visitTag(*this);
 }
 
+Discard::Discard()
+{
+
+}
+
+void Discard::accept(Renderer& r)
+{
+  r.visitTag(*this);
+}
+
+
 } // namespace tags
 
 } // namespace liquid

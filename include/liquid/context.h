@@ -25,6 +25,7 @@ public:
     Break = 1,
     Continue = 2,
     Eject = 4,
+    Discard = Eject | 8,
   };
 
   int& flags() { return m_flags; }
