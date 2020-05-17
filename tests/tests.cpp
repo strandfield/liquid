@@ -318,6 +318,37 @@ TEST(Liquid, manual_whitespace_control) {
   }
 }
 
+TEST(Liquid, include) {
+
+  liquid::Renderer renderer;
+
+  {
+    std::string str = "{% if include %}{{ include.text }}{% endif %}";
+
+    liquid::Template tmplt = liquid::parse(str);
+
+    json::Object data = {};
+    std::string result = tmplt.render(data);
+
+    ASSERT_EQ(result, "");
+
+    renderer.templates()["print_name"] = tmplt;
+  }
+
+  {
+    std::string str =
+      "Hello {% include print_name with text=name %}!";
+
+    liquid::Template tmplt = liquid::parse(str);
+
+    json::Object data = {};
+    data["name"] = "World";
+    std::string result = renderer.render(tmplt, data);
+
+    ASSERT_EQ(result, "Hello World!");
+  }
+}
+
 TEST(Liquid, error) {
 
   std::string str = "{% assign age = 20 %}{{ age.bad_property }}";

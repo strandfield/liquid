@@ -10,6 +10,8 @@
 #include "liquid/objects.h"
 #include "liquid/tags.h"
 
+#include <map>
+
 namespace liquid
 {
 
@@ -34,6 +36,9 @@ public:
   void reset();
 
   Context& context();
+
+  std::map<std::string, Template>& templates();
+  const std::map<std::string, Template>& templates() const;
 
   std::string render(const Template& t, const json::Object& data);
 
@@ -68,6 +73,7 @@ public:
   void visitTag(const tags::Continue& tag);
   void visitTag(const tags::Eject& tag);
   void visitTag(const tags::Discard& tag);
+  void visitTag(const tags::Include& tag);
 
   /* Objects */
   json::Json visitObject(const objects::Value& val);
@@ -100,6 +106,7 @@ private:
   const Template* m_template;
   std::string m_result;
   std::vector<Error> m_errors;
+  std::map<std::string, Template> m_templates;
 };
 
 } // namespace liquid

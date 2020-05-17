@@ -57,6 +57,16 @@ Context& Renderer::context()
   return m_context;
 }
 
+std::map<std::string, Template>& Renderer::templates()
+{
+  return m_templates;
+}
+
+const std::map<std::string, Template>& Renderer::templates() const
+{
+  return m_templates;
+}
+
 const std::vector<Renderer::Error>& Renderer::errors() const
 {
   return m_errors;
@@ -380,6 +390,30 @@ void Renderer::visitTag(const tags::Eject& tag)
 void Renderer::visitTag(const tags::Discard& tag)
 {
   context().flags() |= Context::Discard;
+}
+
+void Renderer::visitTag(const tags::Include& tag)
+{
+  auto it = templates().find(tag.name);
+
+  if (it == templates().end())
+  {
+    throw EvaluationException{ "No template named '" + tag.name + "'" };
+  }
+
+  const Template& tmplt = it->second;
+
+  Context::Scope include_scope{ context() };
+  include_scope["include"]["__"] = true;
+
+  for (const auto& e : tag.objects)
+  {
+    const std::string& var_name = e.first;
+    json::Json var_value = eval(e.second);
+    include_scope["include"][var_name] = var_value;
+  }
+
+  process(tmplt.nodes());
 }
 
 json::Json Renderer::visitObject(const objects::Value& val)

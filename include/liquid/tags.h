@@ -107,6 +107,19 @@ public:
   void accept(Renderer& r);
 };
 
+class Include : public Tag
+{
+public:
+  explicit Include(std::string n);
+  ~Include() = default;
+
+  void accept(Renderer& r);
+
+public:
+  std::string name;
+  std::map<std::string, std::shared_ptr<Object>> objects;
+};
+
 } // tags
 
 } // namespace liquid

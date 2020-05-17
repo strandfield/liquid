@@ -50,6 +50,7 @@ public:
 
   char operator[](size_t off) const;
   bool operator==(const char* str) const;
+  inline bool operator!=(const char* str) const { return !(*this == str); }
 };
 
 struct LIQUID_API Token
@@ -75,6 +76,7 @@ struct LIQUID_API Token
   std::string toString() const;
 
   bool operator==(const char *str) const;
+  inline bool operator!=(const char* str) const { return !(*this == str); }
 };
 
 class LIQUID_API Tokenizer
@@ -147,6 +149,7 @@ protected:
   void process_tag_break(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_continue(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_endfor(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_include(const Token& keyword, std::vector<Token>& tokens);
 
 protected:
   const std::vector<std::shared_ptr<liquid::templates::Node>>& stack() const { return mStack; }

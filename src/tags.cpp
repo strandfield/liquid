@@ -111,6 +111,16 @@ void Discard::accept(Renderer& r)
 }
 
 
+Include::Include(std::string n)
+  : name(std::move(n))
+{
+}
+
+void Include::accept(Renderer& r)
+{
+  r.visitTag(*this);
+}
+
 } // namespace tags
 
 } // namespace liquid

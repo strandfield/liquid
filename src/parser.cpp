@@ -619,6 +619,8 @@ void Parser::processTag(std::vector<Token> & tokens)
     process_tag_eject();
   else if (tok == "discard")
     process_tag_discard();
+  else if (tok == "include")
+    process_tag_include(tok, tokens);
   else
     throw ParserException{ tok.text.offset_, "Unknown tag name" };
 }
@@ -729,6 +731,89 @@ void Parser::process_tag_endfor(const Token& keyword, std::vector<Token>& tokens
   auto node = vec::take_last(mStack);
   assert(node->is<tags::For>());
   dispatchNode(node);
+}
+
+class IncludeParser
+{
+public:
+  tags::Include& result;
+  std::vector<Token>& tokens;
+  size_t index = 0;
+
+  IncludeParser(tags::Include& target, std::vector<Token>& toks) : result(target), tokens(toks)
+  {
+
+  }
+
+  bool atEnd() const
+  {
+    return index == tokens.size();
+  }
+
+  Token read()
+  {
+    if(atEnd())
+      throw ParserException{ tokens.back().text.offset_, "unexpected end of input" };
+
+    return tokens.at(index++);
+  }
+
+  void parse()
+  {
+    std::vector<Token> buffer;
+
+    while (!atEnd())
+    {
+      std::string name = read().toString();
+
+      Token tok = read();
+
+      if (tok.text != "=")
+      {
+        throw ParserException{ tok.text.offset_, "expected '=' after variable name in 'include'" };
+      }
+
+      buffer.clear();
+
+      while (!atEnd())
+      {
+        tok = read();
+
+        if (tok == "and")
+          break;
+
+        buffer.push_back(tok);
+      }
+
+      auto obj = parse_object(buffer);
+      result.objects[name] = obj;
+    }
+  }
+};
+
+void Parser::process_tag_include(const Token& keyword, std::vector<Token>& tokens)
+{
+  if(tokens.empty())
+    throw ParserException{ keyword.text.offset_, "'include' should provide a template name" };
+
+  std::string template_name = tokens.front().toString();
+
+  auto result = std::make_shared<tags::Include>(std::move(template_name));
+
+  tokens.erase(tokens.begin());
+
+  if (!tokens.empty())
+  {
+    if(tokens.front().toString() != "with")
+      throw ParserException{ tokens.front().text.offset_, "expected 'with' keyword after 'include' name" };
+
+    tokens.erase(tokens.begin());
+
+    IncludeParser incparser{ *result, tokens };
+    incparser.parse();
+  }
+
+  dispatchNode(result);
 }
 
 } // namespace liquid
