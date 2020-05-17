@@ -613,6 +613,8 @@ void Parser::processTag(std::vector<Token> & tokens)
     process_tag_continue(tok, tokens);
   else if (tok == "endfor")
     process_tag_endfor(tok, tokens);
+  else if (tok == "comment")
+    process_tag_comment();
   else
     throw ParserException{ tok.text.offset_, "Unknown tag name" };
 }
@@ -620,6 +622,12 @@ void Parser::processTag(std::vector<Token> & tokens)
 std::shared_ptr<liquid::Object> Parser::parseObject(std::vector<Token> & tokens)
 {
   return parse_object(tokens);
+}
+
+void Parser::process_tag_comment()
+{
+  auto node = std::make_shared<tags::Comment>();
+  dispatchNode(node);
 }
 
 void Parser::process_tag_assign(const Token& keyword, std::vector<Token>& tokens)

@@ -18,6 +18,16 @@ Tag::Tag(size_t off)
 namespace tags
 {
 
+Comment::Comment()
+{
+
+}
+
+void Comment::accept(Renderer& /* r */)
+{
+
+}
+
 Assign::Assign(const std::string& varname, const std::shared_ptr<Object>& expr, size_t off)
   : Tag(off), 
     variable(varname),

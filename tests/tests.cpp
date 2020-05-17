@@ -159,6 +159,19 @@ TEST(Liquid, contacts) {
   }
 }
 
+TEST(Liquid, comments) {
+
+  std::string str =
+    "Hello there!{% comment General Kenobi ! %}\n"
+    "  You're a bold 1.";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  std::string result = tmplt.render(json::Object{});
+
+  ASSERT_EQ(result, "Hello there!\n  You're a bold 1.");
+}
+
 #include "liquid/renderer.h"
 #include "liquid/filter.h"
 

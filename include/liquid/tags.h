@@ -17,6 +17,15 @@ namespace liquid
 namespace tags
 {
 
+class Comment : public Tag
+{
+public:
+  Comment();
+  ~Comment() = default;
+
+  void accept(Renderer& r);
+};
+
 class Assign : public Tag
 {
 public:
