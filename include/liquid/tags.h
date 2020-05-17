@@ -89,6 +89,15 @@ public:
   std::vector<Block> blocks;
 };
 
+class Eject : public Tag
+{
+public:
+  Eject();
+  ~Eject() = default;
+
+  void accept(Renderer& r);
+};
+
 } // tags
 
 } // namespace liquid

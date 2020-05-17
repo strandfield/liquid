@@ -24,6 +24,7 @@ public:
     NoFlags = 0,
     Break = 1,
     Continue = 2,
+    Eject = 4,
   };
 
   int& flags() { return m_flags; }

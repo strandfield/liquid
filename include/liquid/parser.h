@@ -136,6 +136,7 @@ protected:
 
 protected:
   void process_tag_comment();
+  void process_tag_eject();
   void process_tag_assign(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_if(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_elsif(const Token& keyword, std::vector<Token>& tokens);

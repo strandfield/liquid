@@ -90,6 +90,16 @@ void If::accept(Renderer& r)
   r.visitTag(*this);
 }
 
+Eject::Eject()
+{
+
+}
+
+void Eject::accept(Renderer& r)
+{
+  r.visitTag(*this);
+}
+
 } // namespace tags
 
 } // namespace liquid

@@ -79,7 +79,12 @@ std::string Renderer::render(const Template& t, const json::Object& data)
   try
   {
     for (auto n : t.nodes())
+    {
       process(n);
+
+      if (context().flags() & Context::Eject)
+        break;
+    }
   }
   catch (const EvaluationException& ex)
   {
@@ -87,6 +92,11 @@ std::string Renderer::render(const Template& t, const json::Object& data)
   }
 
   m_template = nullptr;
+
+  if (context().flags() & Context::Eject)
+  {
+    context().flags() = 0;
+  }
 
   return m_result;
 }
@@ -372,11 +382,18 @@ void Renderer::visitTag(const tags::For & tag)
 
       process(tag.body);
 
-      int rflags = context().flags();
-      context().flags() = 0;
+      if (context().flags() & (Context::Continue | Context::Break))
+      {
+        int rflags = context().flags();
+        context().flags() = 0;
 
-      if (rflags & Context::Break)
+        if (rflags & Context::Break)
+          return;
+      }
+      else if (context().flags() & Context::Eject)
+      {
         return;
+      }
     }
   }
   else
@@ -407,6 +424,11 @@ void Renderer::visitTag(const tags::Break & tag)
 void Renderer::visitTag(const tags::Continue & tag)
 {
   context().flags() |= Context::Continue;
+}
+
+void Renderer::visitTag(const tags::Eject& tag)
+{
+  context().flags() |= Context::Eject;
 }
 
 json::Json Renderer::visitObject(const objects::Value& val)
