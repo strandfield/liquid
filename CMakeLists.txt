@@ -25,12 +25,17 @@ endif()
 ###### json-toolkit
 ##################################################################
 
-file(GLOB_RECURSE JSON_HDR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include/*.h)
+if(NOT TARGET json-toolkit)
 
-add_custom_target(json-toolkit SOURCES ${JSON_HDR_FILES})
+  file(GLOB_RECURSE JSON_HDR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include/*.h)
+  add_custom_target(json-toolkit SOURCES ${JSON_HDR_FILES})
+
+  set(JSONTOOLKIT_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include")
 
 #add_library(json-toolkit INTERFACE)
 #target_sources(json-toolkit INTERFACE ${JSON_HDR_FILES})
+
+endif()
 
 ##################################################################
 ###### liquid
@@ -43,7 +48,7 @@ file(GLOB_RECURSE HDR_FILES
 )
 add_library(liquid ${HDR_FILES} ${SRC_FILES})
 target_include_directories(liquid PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(liquid PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include")
+target_include_directories(liquid PUBLIC ${JSONTOOLKIT_INCLUDE_DIRS})
 
 foreach(_source IN ITEMS ${HDR_FILES} ${SRC_FILES})
     get_filename_component(_source_path "${_source}" PATH)
@@ -52,7 +57,7 @@ foreach(_source IN ITEMS ${HDR_FILES} ${SRC_FILES})
     source_group("${_group_path}" FILES "${_source}")
 endforeach()
 
-target_compile_definitions(liquid PUBLIC -DLIQUID_BUILD_SHARED_LIBRARY)
+target_compile_definitions(liquid PRIVATE -DLIQUID_BUILD_SHARED_LIBRARY)
 
 ##################################################################
 ###### tests, examples & benchmarks

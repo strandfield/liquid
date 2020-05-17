@@ -1,21 +1,29 @@
 
 enable_testing()
 
-configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/googletest-download")
-execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/googletest-download" )
+if(NOT DEFINED CACHE{LIQUID_BUILD_TESTS})
+  set(LIQUID_BUILD_TESTS ON CACHE BOOL "whether to build liquid tests")
+endif()
 
-set(GTEST_DIR "${CMAKE_BINARY_DIR}/googletest-src/googletest" CACHE PATH "Root directory for GoogleTest")
+if(LIQUID_BUILD_TESTS)
 
-add_executable(tests tests.cpp ${GTEST_DIR}/src/gtest-all.cc ${GTEST_DIR}/src/gtest_main.cc)
-add_dependencies(tests liquid)
-target_include_directories(tests PUBLIC "${GTEST_DIR}/include")
-target_include_directories(tests PRIVATE "${GTEST_DIR}")
-target_include_directories(tests PUBLIC "../include")
-target_link_libraries(tests liquid)
+  configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+  execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/googletest-download")
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/googletest-download" )
+  
+  set(GTEST_DIR "${CMAKE_BINARY_DIR}/googletest-src/googletest" CACHE PATH "Root directory for GoogleTest")
+  
+  add_executable(TEST_liquid tests.cpp ${GTEST_DIR}/src/gtest-all.cc ${GTEST_DIR}/src/gtest_main.cc)
+  add_dependencies(TEST_liquid liquid)
+  target_include_directories(TEST_liquid PUBLIC "${GTEST_DIR}/include")
+  target_include_directories(TEST_liquid PRIVATE "${GTEST_DIR}")
+  target_include_directories(TEST_liquid PUBLIC "../include")
+  target_link_libraries(TEST_liquid liquid)
 
-if (NOT DEFINED WIN32)
-  target_link_libraries(tests pthread)
+  if (NOT DEFINED WIN32)
+    target_link_libraries(TEST_liquid pthread)
+  endif()
+
 endif()
