@@ -26,4 +26,9 @@ if(LIQUID_BUILD_TESTS)
     target_link_libraries(TEST_liquid pthread)
   endif()
 
+  if (WIN32)
+    set_target_properties(TEST_liquid PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+    set_target_properties(TEST_liquid PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+  endif()
+
 endif()

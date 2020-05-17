@@ -12,11 +12,16 @@
 namespace liquid
 {
 
+#pragma warning(push)
+#pragma warning(disable: 4275)
+
 class LIQUID_API Exception : public std::exception
 {
 public:
   Exception() = default;
 };
+
+#pragma warning(pop)
 
 } // namespace liquid
 

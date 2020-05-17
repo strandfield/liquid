@@ -46,7 +46,7 @@ file(GLOB_RECURSE HDR_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
-add_library(liquid ${HDR_FILES} ${SRC_FILES})
+add_library(liquid SHARED ${HDR_FILES} ${SRC_FILES})
 target_include_directories(liquid PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(liquid PUBLIC ${JSONTOOLKIT_INCLUDE_DIRS})
 
