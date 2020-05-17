@@ -31,8 +31,7 @@ Renderer::Error::Error(size_t off, std::string mssg)
 }
 
 Renderer::Renderer()
-  : m_template(nullptr),
-    m_strip_whitespace_at_tag(false)
+  : m_template(nullptr)
 {
 
 
@@ -104,33 +103,11 @@ std::string Renderer::render(const Template& t, const json::Object& data)
   return m_result;
 }
 
-void Renderer::setStripWhitespacesAtTag(bool on)
-{
-  m_strip_whitespace_at_tag = on;
-}
-
-bool Renderer::stripWhiteSpacesAtTag() const
-{
-  return m_strip_whitespace_at_tag;
-}
-
 void Renderer::process(const std::shared_ptr<Template::Node>& n)
 {
-  auto last_node = m_last_processed_node;
-  m_last_processed_node = n;
-
   if (n->isText())
   {
-    if (last_node && last_node->isTag() && stripWhiteSpacesAtTag())
-    {
-      std::string text = n->as<templates::TextNode>().text;
-      Renderer::lstrip(text);
-      write(text);
-    }
-    else
-    {
-      write(n->as<templates::TextNode>().text);
-    }
+    write(n->as<templates::TextNode>().text);
   }
   else if (n->isObject())
   {
@@ -138,11 +115,6 @@ void Renderer::process(const std::shared_ptr<Template::Node>& n)
   }
   else if (n->isTag())
   {
-    if (last_node && last_node->isText() && stripWhiteSpacesAtTag())
-    {
-      Renderer::rstrip(m_result);
-    }
-
     static_cast<Tag*>(n.get())->accept(*this);
   }
 }
@@ -331,35 +303,6 @@ void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes
     if (context().flags() != 0)
       return;
   }
-}
-
-inline static bool is_space(char c)
-{
-  return c == ' ' || c == '\r' || c == '\t';
-}
-
-void Renderer::lstrip(std::string& str) noexcept
-{
-  size_t i = 0;
-
-  while (i < str.size() && is_space(str.at(i))) ++i;
-
-  if (i < str.size() && str.at(i) == '\n')
-    ++i;
-
-  str.erase(0, i);
-}
-
-void Renderer::rstrip(std::string& str) noexcept
-{
-  if (str.empty())
-    return;
-
-  size_t i = str.size();
-
-  while (i > 0 && is_space(str.at(--i)));
-
-  str.erase(is_space(str.at(i)) ? i : i + 1);
 }
 
 void Renderer::visitTag(const tags::Assign & assign)

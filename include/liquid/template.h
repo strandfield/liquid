@@ -88,6 +88,11 @@ public:
   std::pair<int, int> linecol(size_t off) const;
   std::string getLine(size_t off) const;
 
+  static void lstrip(std::string& str) noexcept;
+  static void rstrip(std::string& str) noexcept;
+
+  void stripWhitespacesAtTag();
+
   Template& operator=(const Template&) = default;
   Template& operator=(Template&&) noexcept = default;
 

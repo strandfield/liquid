@@ -112,6 +112,101 @@ std::string Template::getLine(size_t off) const
   return std::string(source().begin() + begin, source().begin() + end);
 }
 
+inline static bool is_space(char c)
+{
+  return c == ' ' || c == '\r' || c == '\t';
+}
+
+void Template::lstrip(std::string& str) noexcept
+{
+  size_t i = 0;
+
+  while (i < str.size() && is_space(str.at(i))) ++i;
+
+  if (i == str.size() || str.at(i) != '\n')
+  {
+    str.erase(0, i);
+  }
+  else
+  {
+    ++i;
+    while (i < str.size() && is_space(str.at(i))) ++i;
+    str.erase(0, i);
+  }
+}
+
+void Template::rstrip(std::string& str) noexcept
+{
+  if (str.empty())
+    return;
+
+  size_t i = str.size();
+
+  while (i > 0 && is_space(str.at(--i)));
+
+  str.erase(is_space(str.at(i)) ? i : i + 1);
+}
+
+static void strip_whitespaces_at_tag(const std::vector<std::shared_ptr<templates::Node>>& nodes, bool strip_first, bool strip_last)
+{
+  bool prev_was_tag = strip_first;
+  bool prev_was_text = false;
+  std::shared_ptr<templates::Node> prev_text = nullptr;
+
+  for (auto n : nodes)
+  {
+    if (n->isText())
+    {
+      if (prev_was_tag)
+      {
+        std::string& text = n->as<templates::TextNode>().text;
+        Template::lstrip(text);
+      }
+
+      prev_was_text = true;
+      prev_was_tag = false;
+      prev_text = n;
+    }
+    else if (n->isTag())
+    {
+      if (prev_was_text)
+      {
+        Template::rstrip(prev_text->as<templates::TextNode>().text);
+      }
+
+      if (n->is<tags::If>())
+      {
+        for (tags::If::Block& block : n->as<tags::If>().blocks)
+        {
+          strip_whitespaces_at_tag(block.body, true, true);
+        }
+      }
+      else if (n->is<tags::For>())
+      {
+        strip_whitespaces_at_tag(n->as<tags::For>().body, true, true);
+      }
+
+      prev_was_tag = true;
+      prev_was_text = false;
+    }
+    else
+    {
+      prev_was_text = false;
+      prev_was_tag = false;
+    }
+  }
+
+  if (prev_was_text && strip_last)
+  {
+    Template::rstrip(prev_text->as<templates::TextNode>().text);
+  }
+}
+
+void Template::stripWhitespacesAtTag()
+{
+  strip_whitespaces_at_tag(mNodes, false, false);
+}
+
 Template parse(const std::string& str, std::string filepath)
 {
   liquid::Parser lp;

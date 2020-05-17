@@ -288,11 +288,10 @@ TEST(Liquid, manual_whitespace_control) {
 
   ASSERT_EQ(result, "\n\n  Wow, John G.Chalmers - Smith, you have a long name!\n");
 
-  liquid::Renderer renderer;
-  renderer.setStripWhitespacesAtTag();
-  result = renderer.render(tmplt, data);
+  tmplt.stripWhitespacesAtTag();
+  result = tmplt.render(data);
 
-  ASSERT_EQ(result, "  Wow, John G.Chalmers - Smith, you have a long name!\n");
+  ASSERT_EQ(result, "Wow, John G.Chalmers - Smith, you have a long name!\n");
 }
 
 TEST(Liquid, error) {
