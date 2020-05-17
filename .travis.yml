@@ -38,7 +38,7 @@ matrix:
       - cmake -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER="g++-6" ..
       - make
       - cd tests
-      - ./tests
+      - ./TEST_liquid
       - cd ..
       - cd ..
       - bash <(curl -s https://codecov.io/bash)
