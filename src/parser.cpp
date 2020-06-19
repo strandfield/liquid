@@ -219,7 +219,7 @@ Token Tokenizer::readIdentifier()
 
   Token ret = produce(Token::Identifier);
 
-  if (ret == "or" || ret == "and")
+  if (ret == "or" || ret == "and" || ret == "xor")
     ret.kind = Token::Operator;
   else if (ret == "true" || ret == "false")
     ret.kind = Token::BooleanLiteral;
@@ -424,6 +424,7 @@ public:
 
     static std::vector<std::pair<std::string, OpInfo>> map{
       { "or", { objects::BinOp::Or, 4 } },
+      { "xor", { objects::BinOp::Xor, 4 } },
       { "and", { objects::BinOp::And, 3 } },
       { "!=", { objects::BinOp::Inequal, 2 } },
       { "<>", { objects::BinOp::Inequal, 2 } },

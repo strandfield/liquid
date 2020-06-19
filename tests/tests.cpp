@@ -91,7 +91,8 @@ TEST(Liquid, logic) {
   std::string str = "{% if x or y %}1{% endif %}"
     "{% if a >= b %}2{% endif %}"
     "{% if a and b %}3{% endif %}"
-    "{% if a != b and not w %}4{% endif %}";
+    "{% if a != b and not w %}4{% endif %}"
+    "{% if a xor y %}5{% endif %}";
 
   liquid::Template tmplt = liquid::parse(str);
 
@@ -102,7 +103,7 @@ TEST(Liquid, logic) {
   data["b"] = 10;
   std::string result = tmplt.render(data);
 
-  ASSERT_EQ(result, "134");
+  ASSERT_EQ(result, "1345");
 }
 
 TEST(Liquid, arrayaccess) {

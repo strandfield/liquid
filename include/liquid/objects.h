@@ -76,7 +76,8 @@ public:
     Equal,
     Inequal,
     And,
-    Or
+    Or,
+    Xor,
   };
 
   BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right, size_t off = std::numeric_limits<size_t>::max());

@@ -260,6 +260,8 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
     return evalCondition(eval(binop.lhs)) || evalCondition(eval(binop.rhs));
   case objects::BinOp::And:
     return evalCondition(eval(binop.lhs)) && evalCondition(eval(binop.rhs));
+  case objects::BinOp::Xor:
+    return evalCondition(eval(binop.lhs)) ^ evalCondition(eval(binop.rhs));
   default:
     break;
   }
