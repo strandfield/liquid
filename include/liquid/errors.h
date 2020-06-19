@@ -23,6 +23,24 @@ public:
 
 #pragma warning(pop)
 
+
+class Template;
+
+class LIQUID_API EvaluationException : public Exception
+{
+public:
+  std::string message_;
+  const Template* template_;
+  size_t offset_;
+
+public:
+  explicit EvaluationException(std::string mssg);
+  EvaluationException(std::string mssg, const Template& tmplt, size_t off);
+
+  const char* what() const noexcept override;
+};
+
+
 } // namespace liquid
 
 #endif // LIQUID_ERRORS_H

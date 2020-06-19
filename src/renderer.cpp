@@ -5,30 +5,12 @@
 #include "liquid/renderer.h"
 
 #include "liquid/context.h"
+#include "liquid/filters.h"
 
 #include <json-toolkit/stringify.h>
 
 namespace liquid
 {
-
-EvaluationException::EvaluationException(const std::string& mssg)
-  : message_(mssg)
-{
-
-}
-
-EvaluationException::EvaluationException(const std::string& mssg, const Template& tmplt, size_t off)
-  : message_(mssg), 
-    template_(&tmplt),
-    offset_(off)
-{
-
-}
-
-const char* EvaluationException::what() const noexcept
-{
-  return "liquid::Renderer evaluation error";
-}
 
 Renderer::Error::Error(size_t off, std::string mssg)
   : offset(off),
@@ -40,7 +22,6 @@ Renderer::Error::Error(size_t off, std::string mssg)
 Renderer::Renderer()
   : m_template(nullptr)
 {
-
 
 }
 
@@ -326,7 +307,14 @@ json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
 
 json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
 {
-  throw EvaluationException{ "Invalid filter name '" + name + "'" };
+  if (object.isArray())
+  {
+    return ArrayFilters::applyAny(name, object.toArray(), args);
+  }
+  else
+  {
+    throw EvaluationException{ "Invalid filter name '" + name + "'" };
+  }
 }
 
 void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes)

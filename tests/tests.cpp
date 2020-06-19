@@ -285,6 +285,42 @@ TEST(Liquid, filters) {
   ASSERT_EQ(result, "Hello BOB, your account now contains 10 dollars.");
 }
 
+TEST(Liquid, array_filters) {
+
+  std::string str = "{% assign names = persons | map: 'name' %}{{ names | first }} {{ names | last }} {{ names | join: '|' }}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Array persons;
+
+  {
+    json::Json spongebob;
+    spongebob["name"] = "SpongeBob";
+    spongebob["surname"] = "SquarePants";
+    persons.push(spongebob);
+  }
+
+  {
+    json::Json patrick;
+    patrick["name"] = "Patrick";
+    patrick["surname"] = "Star";
+    persons.push(patrick);
+  }
+
+  {
+    json::Json squidward;
+    squidward["name"] = "Squidward";
+    squidward["surname"] = "Tentacles";
+    persons.push(squidward);
+  }
+
+  json::Object data = {};
+  data["persons"] = persons;
+  std::string result = tmplt.render(data);
+
+  ASSERT_EQ(result, "SpongeBob Squidward SpongeBob|Patrick|Squidward");
+}
+
 TEST(Liquid, manual_whitespace_control) {
 
   {
