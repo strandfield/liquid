@@ -281,205 +281,251 @@ bool Tokenizer::atEnd() const
   return mInput.length_ == mPosition;
 }
 
-static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens);
-
-static Token parse_object_read_operator(std::vector<Token>& tokens)
+class ObjectParser
 {
-  Token tok = vec::take_first(tokens);
+public:
+  std::vector<Token>& tokens;
 
-  if (tok.kind != Token::Operator)
-    throw ParserException{ tok.text.offset_ , std::string("Expected operator") };
-
-  return tok;
-}
-
-static json::Json parse_object_create_literal(const Token& tok) noexcept
-{
-  assert(tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral);
-
-  if (tok.kind == Token::BooleanLiteral)
+  explicit ObjectParser(std::vector<Token>& toks)
+    : tokens(toks)
   {
-    return json::Json{ tok == "true" };
+
   }
-  else if (tok.kind == Token::IntegerLiteral)
+
+  std::shared_ptr<liquid::Object> parse()
   {
-    return json::Json{ std::stoi(tok.toString()) };
+    return parseObject();
   }
-  else // tok.kind == Token::StringLiteral
+
+  Token readOperator()
   {
-    return json::Json(std::string(tok.text.begin() + 1, tok.text.end() - 1));
+    Token tok = vec::take_first(tokens);
+
+    if (tok.kind != Token::Operator)
+      throw ParserException{ tok.text.offset_ , std::string("Expected operator") };
+
+    return tok;
   }
-}
 
-static json::Json parse_object_read_literal(std::vector<Token>& tokens) noexcept
-{
-  assert(!tokens.empty());
-  return parse_object_create_literal(vec::take_first(tokens));
-}
 
-static std::shared_ptr<liquid::Object> parse_object_read_operand(std::vector<Token>& tokens)
-{
-  std::shared_ptr<liquid::Object> obj;
-
-  Token tok = vec::take_first(tokens);
-
-  if (tok.kind == Token::Identifier)
-    obj = std::make_shared<objects::Variable>(tok.toString(), tok.text.offset_);
-  else if (tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
-    obj = std::make_shared<objects::Value>(parse_object_create_literal(tok), tok.text.offset_);
-  else
-    throw ParserException{ tok.text.offset_, "Expected operand" };
-
-  while (!tokens.empty())
+  static json::Json createLiteral(const Token& tok) noexcept
   {
-    if (tokens.front().kind == Token::Dot)
+    assert(tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral);
+
+    if (tok.kind == Token::BooleanLiteral)
     {
-      vec::take_first(tokens);
-
-      if (tokens.empty() || tokens.front().kind != Token::Identifier)
-        throw ParserException{ tokens.front().text.offset_, "Expected identifier after '.'" };
-
-      tok = vec::take_first(tokens);
-      obj = std::make_shared<objects::MemberAccess>(obj, tok.toString(), tok.text.offset_);
+      return json::Json{ tok == "true" };
     }
-    else if (tokens.front().kind == Token::LeftBracket)
+    else if (tok.kind == Token::IntegerLiteral)
     {
-      const Token left_bracket = vec::take_first(tokens);
-      std::vector<Token> subtokens;
+      return json::Json{ std::stoi(tok.toString()) };
+    }
+    else // tok.kind == Token::StringLiteral
+    {
+      return json::Json(std::string(tok.text.begin() + 1, tok.text.end() - 1));
+    }
+  }
 
-      while (!tokens.empty() && tokens.front().kind != Token::RightBracket)
+  json::Json readLiteral() noexcept
+  {
+    assert(!tokens.empty());
+    return createLiteral(vec::take_first(tokens));
+  }
+
+  std::shared_ptr<liquid::Object> readArray(Token tok)
+  {
+    assert(tok.kind == Token::LeftBracket);
+
+    json::Array result;
+
+    for (;;)
+    {
+      result.push(readLiteral());
+
+      if (tokens.front().kind == Token::RightBracket)
       {
-        subtokens.push_back(vec::take_first(tokens));
+        vec::take_first(tokens);
+        break;
+      }
+      else if (tokens.front().kind != Token::Comma)
+      {
+        throw ParserException{ tok.text.offset_, "Expected ','" };
       }
 
-      if (tokens.empty())
-        throw ParserException{ left_bracket.text.offset_, "Could not find closing bracket ']'" };
-
       vec::take_first(tokens);
-
-      if(subtokens.empty())
-        throw ParserException{ left_bracket.text.offset_, "Invalid empty index in array access" };
-
-      std::shared_ptr<liquid::Object> index = parse_object(subtokens);
-      obj = std::make_shared<objects::ArrayAccess>(obj, index, tok.text.offset_);
     }
+
+    return std::make_shared<objects::Value>(result, tok.text.offset_);
+  }
+
+  std::shared_ptr<liquid::Object> readOperand()
+  {
+    std::shared_ptr<liquid::Object> obj;
+
+    Token tok = vec::take_first(tokens);
+
+    if (tok.kind == Token::Identifier)
+      obj = std::make_shared<objects::Variable>(tok.toString(), tok.text.offset_);
+    else if (tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
+      obj = std::make_shared<objects::Value>(createLiteral(tok), tok.text.offset_);
+    else if (tok.kind == Token::LeftBracket)
+      obj = readArray(tok);
     else
+      throw ParserException{ tok.text.offset_, "Expected operand" };
+
+    while (!tokens.empty())
     {
-      break;
+      if (tokens.front().kind == Token::Dot)
+      {
+        vec::take_first(tokens);
+
+        if (tokens.empty() || tokens.front().kind != Token::Identifier)
+          throw ParserException{ tokens.front().text.offset_, "Expected identifier after '.'" };
+
+        tok = vec::take_first(tokens);
+        obj = std::make_shared<objects::MemberAccess>(obj, tok.toString(), tok.text.offset_);
+      }
+      else if (tokens.front().kind == Token::LeftBracket)
+      {
+        const Token left_bracket = vec::take_first(tokens);
+        std::vector<Token> subtokens;
+
+        while (!tokens.empty() && tokens.front().kind != Token::RightBracket)
+        {
+          subtokens.push_back(vec::take_first(tokens));
+        }
+
+        if (tokens.empty())
+          throw ParserException{ left_bracket.text.offset_, "Could not find closing bracket ']'" };
+
+        vec::take_first(tokens);
+
+        if (subtokens.empty())
+          throw ParserException{ left_bracket.text.offset_, "Invalid empty index in array access" };
+
+        ObjectParser subobj_parser{ subtokens };
+        std::shared_ptr<liquid::Object> index = subobj_parser.parse();
+        obj = std::make_shared<objects::ArrayAccess>(obj, index, tok.text.offset_);
+      }
+      else
+      {
+        break;
+      }
     }
+
+    return obj;
   }
 
-  return obj;
-}
-
-static std::shared_ptr<liquid::Object> parse_object_build_expr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<Token> operators)
-{
-  struct OpInfo { objects::BinOp::Operation name; int precedence; };
-
-  static std::vector<std::pair<std::string, OpInfo>> map{
-    { "or", { objects::BinOp::Or, 4 } },
-    { "and", { objects::BinOp::And, 3 } },
-    { "!=", { objects::BinOp::Inequal, 2 } },
-    { "<>", { objects::BinOp::Inequal, 2 } },
-    { "==", { objects::BinOp::Equal, 2 } },
-    { "<", { objects::BinOp::Less, 1 } },
-    { "<=", { objects::BinOp::Leq, 1 } },
-    { ">", { objects::BinOp::Greater, 1 } },
-    { ">=", { objects::BinOp::Geq,1 } },
-  };
-
-  if (operators.size() == 0)
-    return operands.front();
-
-  auto get_info = [](const std::vector<std::pair<std::string, OpInfo>>& map, const Token& optok) -> OpInfo
+  static std::shared_ptr<liquid::Object> buildExpr(std::vector<std::shared_ptr<liquid::Object>> operands, std::vector<Token> operators)
   {
-    return std::find_if(map.begin(), map.end(), [&optok](const std::pair<std::string, OpInfo>& elem) -> bool {
-      return optok == elem.first.data();
-      })->second;
-  };
-  
-  size_t op_index = operators.size() - 1;
-  OpInfo op_info = get_info(map, operators.back());
+    struct OpInfo { objects::BinOp::Operation name; int precedence; };
 
-  for (size_t i(operators.size() - 1); i-- > 0;)
-  {
-    OpInfo temp_op_info = get_info(map, operators.at(i));
-    if (temp_op_info.precedence > op_info.precedence)
-      op_index = i, op_info = temp_op_info;
+    static std::vector<std::pair<std::string, OpInfo>> map{
+      { "or", { objects::BinOp::Or, 4 } },
+      { "and", { objects::BinOp::And, 3 } },
+      { "!=", { objects::BinOp::Inequal, 2 } },
+      { "<>", { objects::BinOp::Inequal, 2 } },
+      { "==", { objects::BinOp::Equal, 2 } },
+      { "<", { objects::BinOp::Less, 1 } },
+      { "<=", { objects::BinOp::Leq, 1 } },
+      { ">", { objects::BinOp::Greater, 1 } },
+      { ">=", { objects::BinOp::Geq,1 } },
+    };
+
+    if (operators.size() == 0)
+      return operands.front();
+
+    auto get_info = [](const std::vector<std::pair<std::string, OpInfo>>& map, const Token& optok) -> OpInfo
+    {
+      return std::find_if(map.begin(), map.end(), [&optok](const std::pair<std::string, OpInfo>& elem) -> bool {
+        return optok == elem.first.data();
+        })->second;
+    };
+
+    size_t op_index = operators.size() - 1;
+    OpInfo op_info = get_info(map, operators.back());
+
+    for (size_t i(operators.size() - 1); i-- > 0;)
+    {
+      OpInfo temp_op_info = get_info(map, operators.at(i));
+      if (temp_op_info.precedence > op_info.precedence)
+        op_index = i, op_info = temp_op_info;
+    }
+
+    auto lhs = buildExpr(vec::mid(operands, 0, op_index + 1), vec::mid(operators, 0, op_index));
+    auto rhs = buildExpr(vec::mid(operands, op_index + 1), vec::mid(operators, op_index + 1));
+
+    return std::make_shared<objects::BinOp>(op_info.name, lhs, rhs, operators.at(op_index).text.offset_);
   }
 
-  auto lhs = parse_object_build_expr(vec::mid(operands, 0, op_index + 1), vec::mid(operators, 0, op_index));
-  auto rhs = parse_object_build_expr(vec::mid(operands, op_index + 1), vec::mid(operators, op_index + 1));
-
-  return std::make_shared<objects::BinOp>(op_info.name, lhs, rhs, operators.at(op_index).text.offset_);
-}
-
-static std::shared_ptr<liquid::Object> parse_object_apply_filter(std::shared_ptr<liquid::Object> obj, std::vector<Token>& tokens)
-{
-  Token tok = vec::take_first(tokens);
-  tok = vec::take_first(tokens);
-
-  std::string name = tok.toString();
-
-  auto ret = std::make_shared<objects::Pipe>(obj, name, tok.text.offset_);
-
-  if (tokens.empty() || tokens.front().kind == Token::Pipe)
-    return ret;
-
-  if (tokens.front().kind != Token::Colon)
-    throw ParserException{ tokens.front().text.offset_, "Expected ':' after filter name" };
-
-  vec::take_first(tokens);
-
-  while (!tokens.empty() && tokens.front().kind != Token::Pipe)
+  std::shared_ptr<liquid::Object> applyFilter(std::shared_ptr<liquid::Object> obj)
   {
-    ret->arguments.push_back(parse_object_read_literal(tokens));
+    Token tok = vec::take_first(tokens);
+    tok = vec::take_first(tokens);
+
+    std::string name = tok.toString();
+
+    auto ret = std::make_shared<objects::Pipe>(obj, name, tok.text.offset_);
 
     if (tokens.empty() || tokens.front().kind == Token::Pipe)
-      break;
+      return ret;
 
-    if (tokens.front().kind != Token::Comma)
-      throw ParserException{ tokens.front().text.offset_, "Expected ',' or '|' or end of filter expression" };
+    if (tokens.front().kind != Token::Colon)
+      throw ParserException{ tokens.front().text.offset_, "Expected ':' after filter name" };
 
-    // read the comma
     vec::take_first(tokens);
+
+    while (!tokens.empty() && tokens.front().kind != Token::Pipe)
+    {
+      ret->arguments.push_back(readLiteral());
+
+      if (tokens.empty() || tokens.front().kind == Token::Pipe)
+        break;
+
+      if (tokens.front().kind != Token::Comma)
+        throw ParserException{ tokens.front().text.offset_, "Expected ',' or '|' or end of filter expression" };
+
+      // read the comma
+      vec::take_first(tokens);
+    }
+
+    return ret;
   }
 
-  return ret;
-}
+  std::shared_ptr<liquid::Object> parseObject()
+  {
+    assert(!tokens.empty());
 
-static std::shared_ptr<liquid::Object> parse_object(std::vector<Token>& tokens)
-{
-  assert(!tokens.empty());
+    if (tokens.size() == 1 && tokens.front().kind == Token::Identifier)
+      return std::make_shared<objects::Variable>(tokens.front().toString(), tokens.front().text.offset_);
 
-  if (tokens.size() == 1 && tokens.front().kind == Token::Identifier)
-    return std::make_shared<objects::Variable>(tokens.front().toString(), tokens.front().text.offset_);
+    auto obj = readOperand();
 
-  auto obj = parse_object_read_operand(tokens);
+    if (tokens.empty())
+      return obj;
 
-  if (tokens.empty())
+    std::vector<std::shared_ptr<liquid::Object>> operands;
+    operands.push_back(obj);
+    std::vector<Token> operators;
+
+    while (!tokens.empty() && tokens.front().kind != Token::Pipe)
+    {
+      operators.push_back(readOperator());
+      operands.push_back(readOperand());
+    }
+
+    obj = buildExpr(operands, operators);
+
+    /* Apply filters */
+    while (!tokens.empty() && tokens.front().kind == Token::Pipe)
+    {
+      obj = applyFilter(obj);
+    }
+
     return obj;
-
-  std::vector<std::shared_ptr<liquid::Object>> operands;
-  operands.push_back(obj);
-  std::vector<Token> operators;
-
-  while (!tokens.empty() && tokens.front().kind != Token::Pipe)
-  {
-    operators.push_back(parse_object_read_operator(tokens));
-    operands.push_back(parse_object_read_operand(tokens));
   }
 
-  obj = parse_object_build_expr(operands, operators);
-
-  /* Apply filters */
-  while (!tokens.empty() && tokens.front().kind == Token::Pipe)
-  {
-    obj = parse_object_apply_filter(obj, tokens);
-  }
-
-  return obj;
-}
+};
 
 Parser::Parser()
   : mPosition(0)
@@ -627,7 +673,8 @@ void Parser::processTag(std::vector<Token> & tokens)
 
 std::shared_ptr<liquid::Object> Parser::parseObject(std::vector<Token> & tokens)
 {
-  return parse_object(tokens);
+  ObjectParser parser{ tokens };
+  return parser.parse();
 }
 
 void Parser::process_tag_comment()
@@ -801,7 +848,8 @@ public:
         buffer.push_back(tok);
       }
 
-      auto obj = parse_object(buffer);
+      ObjectParser obj_parser{ buffer };
+      auto obj = obj_parser.parse();
       result.objects[name] = obj;
     }
   }

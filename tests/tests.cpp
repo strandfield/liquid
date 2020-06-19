@@ -74,7 +74,7 @@ TEST(Liquid, controlflow) {
 
 TEST(Liquid, assign_global) {
 
-  std::string str = "{% assign foo = 'bar' global %}";
+  std::string str = "{% assign foo = ['bar', 0] global %}";
 
   liquid::Template tmplt = liquid::parse(str);
 
@@ -82,7 +82,8 @@ TEST(Liquid, assign_global) {
   json::Object data;
   renderer.render(tmplt, data);
 
-  ASSERT_EQ(data["foo"].toString(), "bar");
+  ASSERT_EQ(data["foo"].at(0).toString(), "bar");
+  ASSERT_EQ(data["foo"].at(1).toInt(), 0);
 }
 
 TEST(Liquid, logic) {
