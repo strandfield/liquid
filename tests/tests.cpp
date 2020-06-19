@@ -351,7 +351,7 @@ TEST(Liquid, manual_whitespace_control) {
       "  - {{ p }}\n"
       "{% endfor %}\n"
       "{% for p in people %}\n"
-      "{{''}}  - {{ p }}\n"
+      "{{''}}  - {{ p }}{% comment %}\n"
       "{% endfor %}\n";
 
     liquid::Template tmplt = liquid::parse(str);
@@ -361,10 +361,10 @@ TEST(Liquid, manual_whitespace_control) {
     data["people"].push("Bob");
     data["people"].push("Alice");
 
-    tmplt.stripWhitespacesAtTag();
+    tmplt.skipWhitespacesAfterTag();
     std::string result = tmplt.render(data);
 
-    ASSERT_EQ(result, "- Bob\n- Alice\n  - Bob\n  - Alice\n");
+    ASSERT_EQ(result, "- Bob\n- Alice\n  - Bob  - Alice");
   }
 }
 

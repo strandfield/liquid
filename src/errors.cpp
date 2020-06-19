@@ -4,6 +4,8 @@
 
 #include "liquid/errors.h"
 
+#include <limits>
+
 namespace liquid
 {
 

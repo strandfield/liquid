@@ -92,6 +92,7 @@ public:
   static void rstrip(std::string& str) noexcept;
 
   void stripWhitespacesAtTag();
+  void skipWhitespacesAfterTag();
 
   Template& operator=(const Template&) = default;
   Template& operator=(Template&&) noexcept = default;

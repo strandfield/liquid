@@ -207,6 +207,51 @@ void Template::stripWhitespacesAtTag()
   strip_whitespaces_at_tag(mNodes, false, false);
 }
 
+static void skip_whitespaces_at_tag(const std::vector<std::shared_ptr<templates::Node>>& nodes, bool strip_first)
+{
+  bool prev_was_tag = strip_first;
+  std::shared_ptr<templates::Node> prev_text = nullptr;
+
+  for (auto n : nodes)
+  {
+    if (n->isText())
+    {
+      if (prev_was_tag)
+      {
+        std::string& text = n->as<templates::TextNode>().text;
+        Template::lstrip(text);
+      }
+
+      prev_was_tag = false;
+    }
+    else if (n->isTag())
+    {
+      if (n->is<tags::If>())
+      {
+        for (tags::If::Block& block : n->as<tags::If>().blocks)
+        {
+          skip_whitespaces_at_tag(block.body, true);
+        }
+      }
+      else if (n->is<tags::For>())
+      {
+        skip_whitespaces_at_tag(n->as<tags::For>().body, true);
+      }
+
+      prev_was_tag = true;
+    }
+    else
+    {
+      prev_was_tag = false;
+    }
+  }
+}
+
+void Template::skipWhitespacesAfterTag()
+{
+  skip_whitespaces_at_tag(mNodes, false);
+}
+
 Template parse(const std::string& str, std::string filepath)
 {
   liquid::Parser lp;
