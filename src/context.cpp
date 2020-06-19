@@ -13,10 +13,11 @@ Context::Context()
   
 }
 
-Context::Scope::Scope(Context& c)
+Context::Scope::Scope(Context& c, ScopeKind k)
   : context_(&c)
 {
   c.scopes().emplace_back();
+  c.scopes().back().kind = k;
 }
 
 Context::Scope::~Scope()
@@ -27,6 +28,35 @@ Context::Scope::~Scope()
 json::Json& Context::Scope::operator[](const std::string& str)
 {
   return context_->scopes().back().data[str];
+}
+
+Context::ScopeData& Context::currentFileScope()
+{
+  for (size_t i(m_stack.size()); i-- > 0; )
+  {
+    if (m_stack.at(i).kind == FileScope)
+      return m_stack[i];
+  }
+
+  throw std::runtime_error{ "No active file scope" };
+}
+
+Context::ScopeData& Context::parentFileScope()
+{
+  bool is_next = false;
+
+  for (size_t i(m_stack.size()); i-- > 0; )
+  {
+    if (m_stack.at(i).kind == FileScope)
+    {
+      if (is_next)
+        return m_stack[i];
+      else
+        is_next = true;
+    }
+  }
+
+  throw std::runtime_error{ "No active file scope" };
 }
 
 } // namespace liquid

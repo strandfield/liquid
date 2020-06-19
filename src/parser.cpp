@@ -653,9 +653,25 @@ void Parser::process_tag_assign(const Token& keyword, std::vector<Token>& tokens
   Token name = vec::take_first(tokens);
   Token eq = vec::take_first(tokens);
 
+  bool parent_scope = false;
+  bool global = false;
+
+  if (tokens.back() == "parent_scope")
+  {
+    tokens.pop_back();
+    parent_scope = true;
+  }
+  else if (tokens.back() == "global")
+  {
+    tokens.pop_back();
+    global = true;
+  }
+
   auto expr = parseObject(tokens);
 
   auto node = std::make_shared<tags::Assign>(name.toString(), expr, keyword.text.offset_);
+  node->parent_scope = parent_scope;
+  node->global_scope = global;
   dispatchNode(node);
 }
 

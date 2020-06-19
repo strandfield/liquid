@@ -30,9 +30,16 @@ public:
 
   int& flags() { return m_flags; }
 
+  enum ScopeKind
+  {
+    GlobalScope,
+    FileScope,
+    ControlBlockScope,
+  };
+
   struct Scope
   {
-    explicit Scope(Context& c);
+    Scope(Context& c, ScopeKind k);
     ~Scope();
 
     json::Json& operator[](const std::string& str);
@@ -43,10 +50,13 @@ public:
 
   struct ScopeData
   {
+    ScopeKind kind = GlobalScope;
     json::Object data;
   };
 
   ScopeData& currentScope() { return m_stack.back(); }
+  ScopeData& currentFileScope();
+  ScopeData& parentFileScope();
   std::vector<ScopeData>& scopes() { return m_stack; }
 
 private:

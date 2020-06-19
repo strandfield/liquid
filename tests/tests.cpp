@@ -72,6 +72,19 @@ TEST(Liquid, controlflow) {
   ASSERT_EQ(result, "54");
 }
 
+TEST(Liquid, assign_global) {
+
+  std::string str = "{% assign foo = 'bar' global %}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  liquid::Renderer renderer;
+  json::Object data;
+  renderer.render(tmplt, data);
+
+  ASSERT_EQ(data["foo"].toString(), "bar");
+}
+
 TEST(Liquid, logic) {
 
   std::string str = "{% if x or y %}1{% endif %}"
@@ -346,6 +359,26 @@ TEST(Liquid, include) {
     std::string result = renderer.render(tmplt, data);
 
     ASSERT_EQ(result, "Hello World!");
+  }
+
+  {
+    std::string str = "{% if include.number > 9 %}{% assign result = false parent_scope %}{% else %}{% assign result = true parent_scope %}{% endif %}";
+
+    liquid::Template tmplt = liquid::parse(str);
+
+    renderer.templates()["is_digit"] = tmplt;
+  }
+
+  {
+    std::string str =
+      "{% include is_digit with number = 10 %}{{result}}{% include is_digit with number = 9 %}{{result}}";
+
+    liquid::Template tmplt = liquid::parse(str);
+
+    json::Object data = {};
+    std::string result = renderer.render(tmplt, data);
+
+    ASSERT_EQ(result, "falsetrue");
   }
 }
 

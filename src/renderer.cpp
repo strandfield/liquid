@@ -82,11 +82,14 @@ std::string Renderer::render(const Template& t, const json::Object& data)
 {
   reset();
 
-  m_template = &t;
   context().currentScope().data = data;
+
+  m_template = &t;
 
   try
   {
+    Context::Scope template_scope{ context(), Context::FileScope };
+
     for (auto n : t.nodes())
     {
       process(n);
@@ -317,14 +320,25 @@ void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes
 
 void Renderer::visitTag(const tags::Assign & assign)
 {
-  context().currentScope().data[assign.variable] = eval(assign.value);
+  if (assign.global_scope)
+  {
+    context().scopes()[0].data[assign.variable] = eval(assign.value);
+  }
+  else if (assign.parent_scope)
+  {
+    context().parentFileScope().data[assign.variable] = eval(assign.value);
+  }
+  else
+  {
+    context().currentFileScope().data[assign.variable] = eval(assign.value);
+  }
 }
 
 void Renderer::visitTag(const tags::For & tag)
 {
   json::Json container = eval(tag.object);
 
-  Context::Scope forloop{ context() };
+  Context::Scope forloop{ context(), Context::ControlBlockScope };
 
   if (container.isArray())
   {
@@ -403,7 +417,7 @@ void Renderer::visitTag(const tags::Include& tag)
 
   const Template& tmplt = it->second;
 
-  Context::Scope include_scope{ context() };
+  Context::Scope include_scope{ context(), Context::FileScope };
   include_scope["include"]["__"] = true;
 
   for (const auto& e : tag.objects)

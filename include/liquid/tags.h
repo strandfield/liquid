@@ -37,6 +37,8 @@ public:
 public:
   std::string variable;
   std::shared_ptr<Object> value;
+  bool parent_scope = false;
+  bool global_scope = false;
 };
 
 class For : public Tag
