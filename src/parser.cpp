@@ -364,8 +364,10 @@ public:
 
     Token tok = vec::take_first(tokens);
 
-    if (tok.kind == Token::Identifier)
+    if (tok.kind == Token::Identifier && tok.text != "not")
       obj = std::make_shared<objects::Variable>(tok.toString(), tok.text.offset_);
+    else if (tok.text == "not")
+      return std::make_shared<objects::LogicalNot>(readOperand(), tok.text.offset_);
     else if (tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
       obj = std::make_shared<objects::Value>(createLiteral(tok), tok.text.offset_);
     else if (tok.kind == Token::LeftBracket)

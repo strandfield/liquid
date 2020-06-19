@@ -289,6 +289,11 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
   return nullptr;
 }
 
+json::Json Renderer::eval_logicalnot(const objects::LogicalNot& op)
+{
+  return !evalCondition(eval(op.object));
+}
+
 json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
 {
   json::Json obj = eval(pipe.object);
@@ -475,6 +480,11 @@ json::Json Renderer::visitObject(const objects::ArrayAccess& aa)
 json::Json Renderer::visitObject(const objects::BinOp& binop)
 {
   return eval_binop(binop);
+}
+
+json::Json Renderer::visitObject(const objects::LogicalNot& obj)
+{
+  return eval_logicalnot(obj);
 }
 
 json::Json Renderer::visitObject(const objects::Pipe& pipe)

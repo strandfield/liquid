@@ -70,6 +70,7 @@ public:
   json::Json visitObject(const objects::MemberAccess& ma);
   json::Json visitObject(const objects::ArrayAccess& aa);
   json::Json visitObject(const objects::BinOp& binop);
+  json::Json visitObject(const objects::LogicalNot& obj);
   json::Json visitObject(const objects::Pipe& pipe);
 
 protected:
@@ -86,6 +87,7 @@ protected:
   json::Json eval_memberaccess(const objects::MemberAccess& ma);
   json::Json eval_arrayaccess(const objects::ArrayAccess& aa);
   json::Json eval_binop(const objects::BinOp& binop);
+  json::Json eval_logicalnot(const objects::LogicalNot& op);
   json::Json eval_pipe(const objects::Pipe& pipe);
 
   virtual json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);

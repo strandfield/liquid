@@ -90,6 +90,18 @@ public:
   std::shared_ptr<Object> rhs;
 };
 
+class LogicalNot : public Object
+{
+public:
+  LogicalNot(const std::shared_ptr<Object>& obj, size_t off = std::numeric_limits<size_t>::max());
+  ~LogicalNot() = default;
+
+  json::Json accept(Renderer& r) override;
+
+public:
+  std::shared_ptr<Object> object;
+};
+
 class Pipe : public Object
 {
 public:

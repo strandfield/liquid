@@ -82,6 +82,18 @@ json::Json BinOp::accept(Renderer& r)
   return r.visitObject(*this);
 }
 
+LogicalNot::LogicalNot(const std::shared_ptr<Object>& obj, size_t off)
+  : Object(off),
+    object(obj)
+{
+
+}
+
+json::Json LogicalNot::accept(Renderer& r)
+{
+  return r.visitObject(*this);
+}
+
 Pipe::Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args, size_t off)
   : Object(off), 
     object(object),
