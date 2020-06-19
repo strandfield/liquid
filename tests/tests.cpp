@@ -300,6 +300,23 @@ TEST(Liquid, filters) {
   ASSERT_EQ(result, "Hello BOB, your account now contains 10 dollars.");
 }
 
+TEST(Liquid, array_push_pop) {
+
+  std::string str = 
+    "{% assign list = [] %}"
+    "{% assign list = list | push: '1' %}"
+    "{% assign list = list | push: 3 %}"
+    "{% assign list = list | pop | push: '2' | push: '3' %}"
+    "{{ list | join: ',' }}";
+   
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Object data = {};
+  std::string result = tmplt.render(data);
+
+  ASSERT_EQ(result, "1,2,3");
+}
+
 TEST(Liquid, array_filters) {
 
   std::string str = "{% assign names = persons | map: 'name' %}{{ names | first }} {{ names | last }} {{ names | join: '|' }}";

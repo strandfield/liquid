@@ -20,6 +20,8 @@ public:
   static json::Json first(const json::Array& a);
   static json::Json last(const json::Array& a);
   static json::Array map(const json::Array& a, const std::string& field);
+  static json::Array push(const json::Array& a, const json::Json& elem);
+  static json::Array pop(const json::Array& a);
 };
 
 } // namespace liquid

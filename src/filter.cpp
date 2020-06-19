@@ -23,6 +23,10 @@ json::Json ArrayFilters::applyAny(const std::string& name, const json::Array& ve
     return last(vec);
   else if (name == "map")
     return map(vec, args.front().toString());
+  else if (name == "push")
+    return push(vec, args.front());
+  else if (name == "pop")
+    return pop(vec);
   else
     throw EvaluationException{ "Invalid filter name '" + name + "'" };
 }
@@ -77,6 +81,28 @@ json::Array ArrayFilters::map(const json::Array& a, const std::string& field)
 
   for (int i(0); i < a.length(); ++i)
     result.push(a.at(i).toObject().data().at(field));
+
+  return result;
+}
+
+json::Array ArrayFilters::push(const json::Array& a, const json::Json& elem)
+{
+  json::Array result;
+
+  for (int i(0); i < a.length(); ++i)
+    result.push(a.at(i));
+
+  result.push(elem);
+
+  return result;
+}
+
+json::Array ArrayFilters::pop(const json::Array& a)
+{
+  json::Array result;
+
+  for (int i(0); i < a.length() - 1; ++i)
+    result.push(a.at(i));
 
   return result;
 }

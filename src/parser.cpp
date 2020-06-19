@@ -326,10 +326,14 @@ public:
     }
   }
 
-  json::Json readLiteral() noexcept
+  json::Json readLiteral()
   {
-    assert(!tokens.empty());
-    return createLiteral(vec::take_first(tokens));
+    Token tok = vec::take_first(tokens);
+
+    if(tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral)
+      return createLiteral(tok);
+
+    throw ParserException{ tok.text.offset_, "expected literal" };
   }
 
   std::shared_ptr<liquid::Object> readArray(Token tok)
@@ -338,22 +342,17 @@ public:
 
     json::Array result;
 
-    for (;;)
+    while (tokens.front().kind != Token::RightBracket)
     {
       result.push(readLiteral());
 
-      if (tokens.front().kind == Token::RightBracket)
+      if (tokens.front().kind == Token::Comma)
       {
         vec::take_first(tokens);
-        break;
       }
-      else if (tokens.front().kind != Token::Comma)
-      {
-        throw ParserException{ tok.text.offset_, "Expected ','" };
-      }
-
-      vec::take_first(tokens);
     }
+
+    vec::take_first(tokens);
 
     return std::make_shared<objects::Value>(result, tok.text.offset_);
   }
