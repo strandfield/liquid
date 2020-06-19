@@ -31,6 +31,7 @@ public:
   std::string render(const Template& t, const json::Object& data);
 
   json::Json eval(const std::shared_ptr<Object>& obj);
+  std::vector<json::Json> eval(const std::vector<std::shared_ptr<Object>>& objects);
   void process(const std::shared_ptr<Template::Node>& node);
   void process(const std::vector<std::shared_ptr<Template::Node>>& nodes);
   virtual std::string stringify(const json::Json& val);

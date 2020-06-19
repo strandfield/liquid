@@ -319,7 +319,7 @@ TEST(Liquid, array_push_pop) {
 
 TEST(Liquid, array_filters) {
 
-  std::string str = "{% assign names = persons | map: 'name' %}{{ names | first }} {{ names | last }} {{ names | join: '|' }}";
+  std::string str = "{% assign names = persons | map: 'name' %}{{ names | first }} {{ names | last }} {{ ['Plankton'] | concat: names | join: '|' }}";
 
   liquid::Template tmplt = liquid::parse(str);
 
@@ -350,7 +350,7 @@ TEST(Liquid, array_filters) {
   data["persons"] = persons;
   std::string result = tmplt.render(data);
 
-  ASSERT_EQ(result, "SpongeBob Squidward SpongeBob|Patrick|Squidward");
+  ASSERT_EQ(result, "SpongeBob Squidward Plankton|SpongeBob|Patrick|Squidward");
 }
 
 TEST(Liquid, manual_whitespace_control) {

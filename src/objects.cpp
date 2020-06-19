@@ -94,7 +94,7 @@ json::Json LogicalNot::accept(Renderer& r)
   return r.visitObject(*this);
 }
 
-Pipe::Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args, size_t off)
+Pipe::Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<std::shared_ptr<Object>>& args, size_t off)
   : Object(off), 
     object(object),
     filterName(filtername),

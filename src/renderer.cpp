@@ -179,6 +179,17 @@ json::Json Renderer::eval(const std::shared_ptr<Object>& obj)
   return obj->accept(*this);
 }
 
+std::vector<json::Json> Renderer::eval(const std::vector<std::shared_ptr<Object>>& objects)
+{
+  std::vector<json::Json> result;
+  result.reserve(objects.size());
+
+  for (auto obj : objects)
+    result.push_back(eval(obj));
+
+  return result;
+}
+
 json::Json Renderer::eval_value(const objects::Value& val)
 {
   return val.value;
@@ -307,7 +318,7 @@ json::Json Renderer::eval_logicalnot(const objects::LogicalNot& op)
 json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
 {
   json::Json obj = eval(pipe.object);
-  std::vector<json::Json> args = pipe.arguments;
+  std::vector<json::Json> args = eval(pipe.arguments);
 
   try
   {

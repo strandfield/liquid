@@ -483,7 +483,7 @@ public:
 
     while (!tokens.empty() && tokens.front().kind != Token::Pipe)
     {
-      ret->arguments.push_back(readLiteral());
+      ret->arguments.push_back(readOperand());
 
       if (tokens.empty() || tokens.front().kind == Token::Pipe)
         break;

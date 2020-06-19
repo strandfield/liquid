@@ -110,7 +110,7 @@ public:
 class Pipe : public Object
 {
 public:
-  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<json::Json>& args = {}, size_t off = std::numeric_limits<size_t>::max());
+  Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, const std::vector<std::shared_ptr<Object>>& args = {}, size_t off = std::numeric_limits<size_t>::max());
   Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, size_t off = std::numeric_limits<size_t>::max());
   ~Pipe() = default;
 
@@ -119,7 +119,7 @@ public:
 public:
   std::shared_ptr<Object> object;
   std::string filterName;
-  std::vector<json::Json> arguments;
+  std::vector<std::shared_ptr<Object>> arguments;
 };
 
 } // namespace objects
