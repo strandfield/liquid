@@ -419,6 +419,19 @@ TEST(Liquid, include) {
   }
 }
 
+TEST(Liquid, capture) {
+
+  std::string str = "{% assign n = 35 %}{% capture text %}You owe me {{n}}$!{% endcapture %}{% assign text = text global %}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Object data = {};
+  std::string result = tmplt.render(data);
+
+  ASSERT_TRUE(result.empty());
+  ASSERT_EQ(data["text"].toString(), "You owe me 35$!");
+}
+
 TEST(Liquid, error) {
 
   std::string str = "{% assign age = 20 %}{{ age.bad_property }}";

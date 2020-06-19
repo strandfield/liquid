@@ -55,6 +55,7 @@ public:
 
   /* Tags */
   void visitTag(const tags::Assign& tag);
+  void visitTag(const tags::Capture& tag);
   void visitTag(const tags::For& tag);
   void visitTag(const tags::If& tag);
   void visitTag(const tags::Break& tag);

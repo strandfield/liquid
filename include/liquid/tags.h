@@ -41,6 +41,19 @@ public:
   bool global_scope = false;
 };
 
+class Capture : public Tag
+{
+public:
+  explicit Capture(const std::string& varname, size_t off = std::numeric_limits<size_t>::max());
+  ~Capture() = default;
+
+  void accept(Renderer& r);
+
+public:
+  std::string variable;
+  std::vector<std::shared_ptr<templates::Node>> body;
+};
+
 class For : public Tag
 {
 public:

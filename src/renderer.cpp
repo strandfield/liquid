@@ -344,6 +344,18 @@ void Renderer::visitTag(const tags::Assign & assign)
   }
 }
 
+void Renderer::visitTag(const tags::Capture& tag)
+{
+  size_t offset = m_result.size();
+
+  process(tag.body);
+
+  std::string captured{ m_result.begin() + offset, m_result.end() };
+  m_result.resize(offset);
+
+  context().currentFileScope().data[tag.variable] = std::move(captured);
+}
+
 void Renderer::visitTag(const tags::For & tag)
 {
   json::Json container = eval(tag.object);

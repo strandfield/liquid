@@ -42,6 +42,19 @@ void Assign::accept(Renderer& r)
 }
 
 
+Capture::Capture(const std::string& varname, size_t off)
+  : Tag(off),
+    variable(varname)
+{
+
+}
+
+void Capture::accept(Renderer& r)
+{
+  r.visitTag(*this);
+}
+
+
 For::For(const std::string& varname, const std::shared_ptr<Object>& expr, size_t off)
   : Tag(off),
     variable(varname),

@@ -627,13 +627,16 @@ void Parser::dispatchNode(std::shared_ptr<liquid::templates::Node> n)
 
     const bool is_for = top->is<tags::For>();
     const bool is_if = !is_for && top->is<tags::If>();
+    const bool is_capture = !is_for && !is_if && top->is<tags::Capture>();
 
-    assert(is_for || is_if);
+    assert(is_for || is_if || is_capture);
 
     if (is_for)
       top->as<tags::For>().body.push_back(n);
     else if (is_if)
       top->as<tags::If>().blocks.back().body.push_back(n);
+    else if (is_capture)
+      top->as<tags::Capture>().body.push_back(n);
   }
 }
 
@@ -667,6 +670,10 @@ void Parser::processTag(std::vector<Token> & tokens)
     process_tag_discard();
   else if (tok == "include")
     process_tag_include(tok, tokens);
+  else if (tok == "capture")
+    process_tag_capture(tok, tokens);
+  else if (tok == "endcapture")
+    process_tag_endcapture(tok, tokens);
   else
     throw ParserException{ tok.text.offset_, "Unknown tag name" };
 }
@@ -878,6 +885,23 @@ void Parser::process_tag_include(const Token& keyword, std::vector<Token>& token
   }
 
   dispatchNode(result);
+}
+
+void Parser::process_tag_capture(const Token& keyword, std::vector<Token>& tokens)
+{
+  std::string name = vec::take_first(tokens).toString();
+
+  auto tag = std::make_shared<tags::Capture>(name, keyword.text.offset_);
+  mStack.push_back(tag);
+}
+
+void Parser::process_tag_endcapture(const Token& keyword, std::vector<Token>& tokens)
+{
+  if (stack().empty() || !stack().back()->is<tags::Capture>())
+    throw ParserException{ keyword.text.offset_, "Unexpected 'endcapture' tag" };
+
+  auto node = vec::take_last(mStack);
+  dispatchNode(node);
 }
 
 } // namespace liquid
