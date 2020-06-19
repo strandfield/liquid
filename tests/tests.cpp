@@ -106,6 +106,20 @@ TEST(Liquid, logic) {
   ASSERT_EQ(result, "1345");
 }
 
+TEST(Liquid, math) {
+
+  std::string str = "{% if 4 + 4 == 8 xor 2 - 2 %}1{% endif %}"
+    "{% if 0 == 9 - 9 / 2 * 2 %}2{% endif %}"
+    "{% if 8 - 8 / 2 * 2 < 1 %}3{% endif %}";
+
+  liquid::Template tmplt = liquid::parse(str);
+
+  json::Object data = {};
+  std::string result = tmplt.render(data);
+
+  ASSERT_EQ(result, "13");
+}
+
 TEST(Liquid, arrayaccess) {
 
   std::string str = "{% assign index = 1 %}{{ numbers[index] }}";

@@ -78,6 +78,10 @@ public:
     And,
     Or,
     Xor,
+    Add,
+    Sub,
+    Mul,
+    Div,
   };
 
   BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right, size_t off = std::numeric_limits<size_t>::max());

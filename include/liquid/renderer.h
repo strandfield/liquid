@@ -90,6 +90,11 @@ protected:
   json::Json eval_logicalnot(const objects::LogicalNot& op);
   json::Json eval_pipe(const objects::Pipe& pipe);
 
+  json::Json json_add(const json::Json& lhs, const json::Json& rhs) const;
+  json::Json json_sub(const json::Json& lhs, const json::Json& rhs) const;
+  json::Json json_mul(const json::Json& lhs, const json::Json& rhs) const;
+  json::Json json_div(const json::Json& lhs, const json::Json& rhs) const;
+
   virtual json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);
 
 private:

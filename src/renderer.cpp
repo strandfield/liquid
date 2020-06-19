@@ -283,6 +283,14 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
     return json::compare(lhs, rhs) > 0;
   case objects::BinOp::Geq:
     return json::compare(lhs, rhs) >= 0;
+  case objects::BinOp::Add:
+    return json_add(lhs, rhs);
+  case objects::BinOp::Sub:
+    return json_sub(lhs, rhs);
+  case objects::BinOp::Mul:
+    return json_mul(lhs, rhs);
+  case objects::BinOp::Div:
+    return json_div(lhs, rhs);
   default:
     break;
   }
@@ -310,6 +318,145 @@ json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
     ex.offset_ = pipe.offset();
     throw;
   }
+}
+json::Json Renderer::json_add(const json::Json& lhs, const json::Json& rhs) const
+{
+  if (lhs.type() == json::JsonType::Integer)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toInt() + rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toInt() + rhs.toNumber();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::Number)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toNumber() + rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toNumber() + rhs.toNumber();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::String)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::String:
+      return lhs.toString() + rhs.toString();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::Array)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Array:
+      return ArrayFilters::concat(lhs.toArray(), rhs.toArray());
+    default:
+      break;
+    }
+  }
+
+  throw EvaluationException{ "operator + cannot proceed with given operands" };
+}
+
+json::Json Renderer::json_sub(const json::Json& lhs, const json::Json& rhs) const
+{
+  if (lhs.type() == json::JsonType::Integer)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toInt() - rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toInt() - rhs.toNumber();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::Number)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toNumber() - rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toNumber() - rhs.toNumber();
+    default:
+      break;
+    }
+  }
+
+  throw EvaluationException{ "operator - cannot proceed with given operands" };
+}
+
+json::Json Renderer::json_mul(const json::Json& lhs, const json::Json& rhs) const
+{
+  if (lhs.type() == json::JsonType::Integer)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toInt() * rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toInt() * rhs.toNumber();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::Number)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toNumber() * rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toNumber() * rhs.toNumber();
+    default:
+      break;
+    }
+  }
+
+  throw EvaluationException{ "operator * cannot proceed with given operands" };
+}
+
+json::Json Renderer::json_div(const json::Json& lhs, const json::Json& rhs) const
+{
+  if (lhs.type() == json::JsonType::Integer)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toInt() / rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toInt() / rhs.toNumber();
+    default:
+      break;
+    }
+  }
+  else if (lhs.type() == json::JsonType::Number)
+  {
+    switch (rhs.type())
+    {
+    case json::JsonType::Integer:
+      return lhs.toNumber() / rhs.toInt();
+    case json::JsonType::Number:
+      return lhs.toNumber() / rhs.toNumber();
+    default:
+      break;
+    }
+  }
+
+  throw EvaluationException{ "operator * cannot proceed with given operands" };
 }
 
 json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)

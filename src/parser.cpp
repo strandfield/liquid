@@ -118,7 +118,7 @@ bool Token::operator==(const char *str) const
 Tokenizer::Tokenizer()
   : mPosition(0), mStartPos(0)
 {
-  mPunctuators = std::set<char>{ '!', '<', '>', '=' };
+  mPunctuators = std::set<char>{ '!', '<', '>', '=', '+', '-', '*', '/' };
 }
 
 std::vector<Token> Tokenizer::tokenize(StringView str)
@@ -423,16 +423,20 @@ public:
     struct OpInfo { objects::BinOp::Operation name; int precedence; };
 
     static std::vector<std::pair<std::string, OpInfo>> map{
-      { "or", { objects::BinOp::Or, 4 } },
-      { "xor", { objects::BinOp::Xor, 4 } },
-      { "and", { objects::BinOp::And, 3 } },
-      { "!=", { objects::BinOp::Inequal, 2 } },
-      { "<>", { objects::BinOp::Inequal, 2 } },
-      { "==", { objects::BinOp::Equal, 2 } },
-      { "<", { objects::BinOp::Less, 1 } },
-      { "<=", { objects::BinOp::Leq, 1 } },
-      { ">", { objects::BinOp::Greater, 1 } },
-      { ">=", { objects::BinOp::Geq,1 } },
+      { "or", { objects::BinOp::Or, 6 } },
+      { "xor", { objects::BinOp::Xor, 6 } },
+      { "and", { objects::BinOp::And, 5 } },
+      { "!=", { objects::BinOp::Inequal, 4 } },
+      { "<>", { objects::BinOp::Inequal, 4 } },
+      { "==", { objects::BinOp::Equal, 4 } },
+      { "<", { objects::BinOp::Less, 3 } },
+      { "<=", { objects::BinOp::Leq, 3 } },
+      { ">", { objects::BinOp::Greater, 3 } },
+      { ">=", { objects::BinOp::Geq, 3 } },
+      { "+", { objects::BinOp::Add, 2 } },
+      { "-", { objects::BinOp::Sub, 2 } },
+      { "*", { objects::BinOp::Mul, 1 } },
+      { "/", { objects::BinOp::Div, 1 } },
     };
 
     if (operators.size() == 0)
