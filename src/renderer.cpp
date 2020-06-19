@@ -11,9 +11,16 @@
 namespace liquid
 {
 
-EvaluationException::EvaluationException(const std::string& mssg, size_t off)
-  : offset_(off),
-    message_(mssg)
+EvaluationException::EvaluationException(const std::string& mssg)
+  : message_(mssg)
+{
+
+}
+
+EvaluationException::EvaluationException(const std::string& mssg, const Template& tmplt, size_t off)
+  : message_(mssg), 
+    template_(&tmplt),
+    offset_(off)
 {
 
 }
@@ -88,7 +95,7 @@ std::string Renderer::render(const Template& t, const json::Object& data)
 
   try
   {
-    Context::Scope template_scope{ context(), Context::FileScope };
+    Context::Scope template_scope{ context(), t };
 
     for (auto n : t.nodes())
     {
@@ -161,8 +168,23 @@ void Renderer::log(const EvaluationException& ex)
 {
   record(ex);
 
-  std::pair<int, int> linecol = model().linecol(ex.offset_);
-  write("{! " + std::to_string(linecol.first) + ":" + std::to_string(linecol.second) + ": " + ex.message_ + " !}");
+  if (ex.template_)
+  {
+    if (ex.template_ != m_template && !ex.template_->filePath().empty())
+    {
+      std::pair<int, int> linecol = ex.template_->linecol(ex.offset_);
+      write("{! " + ex.template_->filePath()  + ":" + std::to_string(linecol.first) + ":" + std::to_string(linecol.second) + ": " + ex.message_ + " !}");
+    }
+    else
+    {
+      std::pair<int, int> linecol = model().linecol(ex.offset_);
+      write("{! " + std::to_string(linecol.first) + ":" + std::to_string(linecol.second) + ": " + ex.message_ + " !}");
+    }
+  }
+  else
+  {
+    write("{! " + ex.message_ + " !}");
+  }
 }
 
 bool Renderer::evalCondition(const json::Json& val)
@@ -220,7 +242,7 @@ json::Json Renderer::eval_memberaccess(const objects::MemberAccess& ma)
   }
   else
   {
-    throw EvaluationException{ "Value does not support member access", ma.object->offset() };
+    throw EvaluationException{ "Value does not support member access", context().currentTemplate(), ma.object->offset() };
   }
 }
 
@@ -232,20 +254,20 @@ json::Json Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
   if (index.isInteger())
   {
     if (!obj.isArray())
-      throw EvaluationException{ "Value is not an array", aa.object->offset() };
+      throw EvaluationException{ "Value is not an array", context().currentTemplate(),  aa.object->offset() };
 
     return obj.at(index.toInt());
   }
   else if (index.isString())
   {
     if (!obj.isObject())
-      throw EvaluationException{ "Value is not an object", aa.object->offset() };
+      throw EvaluationException{ "Value is not an object",  context().currentTemplate(), aa.object->offset() };
 
     return obj[index.toString()];
   }
   else
   {
-    throw EvaluationException{ "Index must be a 'string' or an 'int'", aa.index->offset() };
+    throw EvaluationException{ "Index must be a 'string' or an 'int'",  context().currentTemplate(), aa.index->offset() };
   }
 }
 
@@ -417,7 +439,7 @@ void Renderer::visitTag(const tags::Include& tag)
 
   const Template& tmplt = it->second;
 
-  Context::Scope include_scope{ context(), Context::FileScope };
+  Context::Scope include_scope{ context(), tmplt };
   include_scope["include"]["__"] = true;
 
   for (const auto& e : tag.objects)

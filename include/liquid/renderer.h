@@ -15,14 +15,18 @@
 namespace liquid
 {
 
+class Template;
+
 class LIQUID_API EvaluationException : public Exception
 {
 public:
-  size_t offset_;
   std::string message_;
+  const Template* template_;
+  size_t offset_;
 
 public:
-  EvaluationException(const std::string& mssg, size_t off = std::numeric_limits<size_t>::max());
+  explicit EvaluationException(const std::string& mssg);
+  EvaluationException(const std::string& mssg, const Template& tmplt, size_t off);
 
   const char* what() const noexcept override;
 };

@@ -14,6 +14,8 @@
 namespace liquid
 {
 
+class Template;
+
 class LIQUID_API Context
 {
 public:
@@ -40,6 +42,7 @@ public:
   struct Scope
   {
     Scope(Context& c, ScopeKind k);
+    Scope(Context& c, const Template& tmplt);
     ~Scope();
 
     json::Json& operator[](const std::string& str);
@@ -52,7 +55,10 @@ public:
   {
     ScopeKind kind = GlobalScope;
     json::Object data;
+    const Template* template_ = nullptr;
   };
+
+  const Template& currentTemplate() const;
 
   ScopeData& currentScope() { return m_stack.back(); }
   ScopeData& currentFileScope();

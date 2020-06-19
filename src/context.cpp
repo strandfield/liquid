@@ -20,6 +20,14 @@ Context::Scope::Scope(Context& c, ScopeKind k)
   c.scopes().back().kind = k;
 }
 
+Context::Scope::Scope(Context& c, const Template& tmplt)
+  : context_(&c)
+{
+  c.scopes().emplace_back();
+  c.scopes().back().kind = Context::FileScope;
+  c.scopes().back().template_ = &tmplt;
+}
+
 Context::Scope::~Scope()
 {
   context_->scopes().pop_back();
@@ -28,6 +36,17 @@ Context::Scope::~Scope()
 json::Json& Context::Scope::operator[](const std::string& str)
 {
   return context_->scopes().back().data[str];
+}
+
+const Template& Context::currentTemplate() const
+{
+  for (size_t i(m_stack.size()); i-- > 0; )
+  {
+    if (m_stack.at(i).template_ != nullptr)
+      return *m_stack.at(i).template_;
+  }
+
+  throw std::runtime_error{ "No active template" };
 }
 
 Context::ScopeData& Context::currentFileScope()
