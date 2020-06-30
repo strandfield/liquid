@@ -380,7 +380,7 @@ TEST(Liquid, manual_whitespace_control) {
   {
     std::string str =
       "{% for p in people %}\n"
-      "  - {{ p }}\n"
+      "  - {{ p }}{% newline %}\n"
       "{% endfor %}\n"
       "{% for p in people %}\n"
       "{{''}}  - {{ p }}{% comment %}\n"

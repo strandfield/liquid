@@ -135,6 +135,15 @@ public:
   std::map<std::string, std::shared_ptr<Object>> objects;
 };
 
+class Newline : public Tag
+{
+public:
+  explicit Newline(size_t off = std::numeric_limits<size_t>::max());
+  ~Newline() = default;
+
+  void accept(Renderer& r);
+};
+
 } // tags
 
 } // namespace liquid

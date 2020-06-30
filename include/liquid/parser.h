@@ -152,6 +152,7 @@ protected:
   void process_tag_include(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_capture(const Token& keyword, std::vector<Token>& tokens);
   void process_tag_endcapture(const Token& keyword, std::vector<Token>& tokens);
+  void process_tag_newline(const Token& keyword, std::vector<Token>& tokens);
 
 protected:
   const std::vector<std::shared_ptr<liquid::templates::Node>>& stack() const { return mStack; }

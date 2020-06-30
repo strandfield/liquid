@@ -134,6 +134,17 @@ void Include::accept(Renderer& r)
   r.visitTag(*this);
 }
 
+Newline::Newline(size_t off)
+  : Tag(off)
+{
+
+}
+
+void Newline::accept(Renderer& r)
+{
+  r.visitTag(*this);
+}
+
 } // namespace tags
 
 } // namespace liquid

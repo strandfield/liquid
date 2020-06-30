@@ -680,6 +680,8 @@ void Parser::processTag(std::vector<Token> & tokens)
     process_tag_capture(tok, tokens);
   else if (tok == "endcapture")
     process_tag_endcapture(tok, tokens);
+  else if (tok == "newline")
+    process_tag_newline(tok, tokens);
   else
     throw ParserException{ tok.text.offset_, "Unknown tag name" };
 }
@@ -908,6 +910,11 @@ void Parser::process_tag_endcapture(const Token& keyword, std::vector<Token>& to
 
   auto node = vec::take_last(mStack);
   dispatchNode(node);
+}
+
+void Parser::process_tag_newline(const Token& keyword, std::vector<Token>& /* tokens */)
+{
+  dispatchNode(std::make_shared<tags::Newline>(keyword.text.offset_));
 }
 
 } // namespace liquid

@@ -64,6 +64,7 @@ public:
   void visitTag(const tags::Eject& tag);
   void visitTag(const tags::Discard& tag);
   void visitTag(const tags::Include& tag);
+  void visitTag(const tags::Newline& tag);
 
   /* Objects */
   json::Json visitObject(const objects::Value& val);

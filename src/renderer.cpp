@@ -617,6 +617,11 @@ void Renderer::visitTag(const tags::Include& tag)
   process(tmplt.nodes());
 }
 
+void Renderer::visitTag(const tags::Newline&)
+{
+  m_result.push_back('\n');
+}
+
 json::Json Renderer::visitObject(const objects::Value& val)
 {
   return eval_value(val);
