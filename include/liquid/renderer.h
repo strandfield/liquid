@@ -83,6 +83,9 @@ protected:
   void record(const EvaluationException& ex);
   virtual void log(const EvaluationException& ex);
 
+  std::string capture(const Template& tmplt, const json::Object& data);
+  std::string capture(const std::vector<std::shared_ptr<templates::Node>>& nodes);
+
   /* Objects */
   json::Json eval_value(const objects::Value& val);
   json::Json eval_variable(const objects::Variable& var);

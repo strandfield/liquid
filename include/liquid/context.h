@@ -39,10 +39,11 @@ public:
     ControlBlockScope,
   };
 
-  struct Scope
+  struct LIQUID_API Scope
   {
     Scope(Context& c, ScopeKind k);
     Scope(Context& c, const Template& tmplt);
+    Scope(Context& c, const Template& tmplt, const json::Object& data);
     ~Scope();
 
     json::Json& operator[](const std::string& str);

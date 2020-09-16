@@ -168,6 +168,25 @@ void Renderer::log(const EvaluationException& ex)
   }
 }
 
+std::string Renderer::capture(const Template& tmplt, const json::Object& data)
+{
+  Context::Scope grouptable_scope{ context(), tmplt, data };
+  return capture(tmplt.nodes());
+}
+
+std::string Renderer::capture(const std::vector<std::shared_ptr<templates::Node>>& nodes)
+{
+  size_t offset = m_result.size();
+
+  process(nodes);
+
+  std::string captured{ m_result.begin() + offset, m_result.end() };
+  m_result.resize(offset);
+
+  return captured;
+
+}
+
 bool Renderer::evalCondition(const json::Json& val)
 {
   return val.isBoolean() ? val.toBool() :
@@ -511,13 +530,7 @@ void Renderer::visitTag(const tags::Assign & assign)
 
 void Renderer::visitTag(const tags::Capture& tag)
 {
-  size_t offset = m_result.size();
-
-  process(tag.body);
-
-  std::string captured{ m_result.begin() + offset, m_result.end() };
-  m_result.resize(offset);
-
+  std::string captured = capture(tag.body);
   context().currentFileScope().data[tag.variable] = std::move(captured);
 }
 

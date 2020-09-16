@@ -28,6 +28,12 @@ Context::Scope::Scope(Context& c, const Template& tmplt)
   c.scopes().back().template_ = &tmplt;
 }
 
+Context::Scope::Scope(Context& c, const Template& tmplt, const json::Object& data)
+  : Scope(c, tmplt)
+{
+  c.scopes().back().data = data;
+}
+
 Context::Scope::~Scope()
 {
   context_->scopes().pop_back();
