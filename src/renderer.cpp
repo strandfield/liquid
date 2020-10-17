@@ -120,7 +120,7 @@ void Renderer::process(const std::shared_ptr<Template::Node>& n)
   }
 }
 
-std::string Renderer::stringify(const json::Json & val)
+std::string Renderer::defaultStringify(const json::Json& val)
 {
   if (val.isNull())
     return {};
@@ -133,6 +133,11 @@ std::string Renderer::stringify(const json::Json & val)
     return StringBackend::from_number(val.toNumber());
   else
     return json::stringify(val);
+}
+
+std::string Renderer::stringify(const json::Json & val)
+{
+  return defaultStringify(val);
 }
 
 void Renderer::write(const std::string& str)
@@ -170,7 +175,7 @@ void Renderer::log(const EvaluationException& ex)
 
 std::string Renderer::capture(const Template& tmplt, const json::Object& data)
 {
-  Context::Scope grouptable_scope{ context(), tmplt, data };
+  Context::Scope capture_scope{ context(), tmplt, data };
   return capture(tmplt.nodes());
 }
 
@@ -184,7 +189,6 @@ std::string Renderer::capture(const std::vector<std::shared_ptr<templates::Node>
   m_result.resize(offset);
 
   return captured;
-
 }
 
 bool Renderer::evalCondition(const json::Json& val)
