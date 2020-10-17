@@ -495,14 +495,7 @@ json::Json Renderer::json_div(const json::Json& lhs, const json::Json& rhs) cons
 
 json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
 {
-  if (object.isArray())
-  {
-    return ArrayFilters::applyAny(name, object.toArray(), args);
-  }
-  else
-  {
-    throw EvaluationException{ "Invalid filter name '" + name + "'" };
-  }
+  return BuiltinFilters::apply(name, object, args);
 }
 
 void Renderer::process(const std::vector<std::shared_ptr<Template::Node>>& nodes)

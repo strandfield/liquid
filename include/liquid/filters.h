@@ -24,6 +24,12 @@ public:
   static json::Array pop(const json::Array& a);
 };
 
+class LIQUID_API BuiltinFilters
+{
+public:
+  static json::Json apply(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);
+};
+
 } // namespace liquid
 
 #endif // LIQUID_FILTERS_H

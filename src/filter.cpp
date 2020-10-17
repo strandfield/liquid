@@ -107,5 +107,17 @@ json::Array ArrayFilters::pop(const json::Array& a)
   return result;
 }
 
+json::Json BuiltinFilters::apply(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
+{
+  if (object.isArray())
+  {
+    return ArrayFilters::applyAny(name, object.toArray(), args);
+  }
+  else
+  {
+    throw EvaluationException{ "Invalid filter name '" + name + "'" };
+  }
+}
+
 } // namespace liquid
 
