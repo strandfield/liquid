@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -6,8 +6,6 @@
 #define LIQUID_OBJECTS_H
 
 #include "liquid/object.h"
-
-#include <json-toolkit/json.h>
 
 namespace liquid
 {
@@ -18,13 +16,13 @@ namespace objects
 class Value : public Object
 {
 public:
-  Value(const json::Json& val, size_t off = std::numeric_limits<size_t>::max());
+  Value(const liquid::Value& val, size_t off = std::numeric_limits<size_t>::max());
   ~Value() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
-  json::Json value;
+  liquid::Value value;
 };
 
 class Variable : public Object
@@ -33,7 +31,7 @@ public:
   Variable(std::string n, size_t off = std::numeric_limits<size_t>::max());
   ~Variable() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   std::string name;
@@ -45,7 +43,7 @@ public:
   ArrayAccess(const std::shared_ptr<Object>& obj, const std::shared_ptr<Object>& ind, size_t off = std::numeric_limits<size_t>::max());
   ~ArrayAccess() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;
@@ -58,7 +56,7 @@ public:
   MemberAccess(const std::shared_ptr<Object>& obj, const std::string& name, size_t off = std::numeric_limits<size_t>::max());
   ~MemberAccess() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;
@@ -87,7 +85,7 @@ public:
   BinOp(Operation op, const std::shared_ptr<Object>& left, const std::shared_ptr<Object>& right, size_t off = std::numeric_limits<size_t>::max());
   ~BinOp() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   Operation operation;
@@ -101,7 +99,7 @@ public:
   LogicalNot(const std::shared_ptr<Object>& obj, size_t off = std::numeric_limits<size_t>::max());
   ~LogicalNot() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;
@@ -114,7 +112,7 @@ public:
   Pipe(const std::shared_ptr<Object>& object, const std::string& filtername, size_t off = std::numeric_limits<size_t>::max());
   ~Pipe() = default;
 
-  json::Json accept(Renderer& r) override;
+  liquid::Value accept(Renderer& r) override;
 
 public:
   std::shared_ptr<Object> object;

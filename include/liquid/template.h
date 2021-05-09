@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -7,7 +7,7 @@
 
 #include "liquid-defs.h"
 
-#include <json-toolkit/json.h>
+#include "liquid/value.h"
 
 #include <limits>
 #include <memory>
@@ -76,10 +76,10 @@ public:
   const std::string& source() const;
   const std::vector<std::shared_ptr<templates::Node>>& nodes() const { return mNodes; }
 
-  std::string render(const json::Object& data) const;
+  std::string render(const liquid::Map& data) const;
 
   template<typename R>
-  std::string render(const json::Object& data) const
+  std::string render(const liquid::Map& data) const
   {
     R renderer;
     return renderer.render(*this, data);

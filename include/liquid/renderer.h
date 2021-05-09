@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -28,16 +28,16 @@ public:
   std::map<std::string, Template>& templates();
   const std::map<std::string, Template>& templates() const;
 
-  std::string render(const Template& t, const json::Object& data);
+  std::string render(const Template& t, const liquid::Map& data);
 
-  json::Json eval(const std::shared_ptr<Object>& obj);
-  std::vector<json::Json> eval(const std::vector<std::shared_ptr<Object>>& objects);
+  liquid::Value eval(const std::shared_ptr<Object>& obj);
+  std::vector<liquid::Value> eval(const std::vector<std::shared_ptr<Object>>& objects);
 
   void process(const std::shared_ptr<Template::Node>& node);
   void process(const std::vector<std::shared_ptr<Template::Node>>& nodes);
 
-  static std::string defaultStringify(const json::Json& val);
-  virtual std::string stringify(const json::Json& val);
+  static std::string defaultStringify(const liquid::Value& val);
+  virtual std::string stringify(const liquid::Value& val);
 
   struct Error
   {
@@ -55,7 +55,7 @@ public:
 
   const std::vector<Error>& errors() const;
 
-  static bool evalCondition(const json::Json& val);
+  static bool evalCondition(const liquid::Value& val);
 
   /* Tags */
   void visitTag(const tags::Assign& tag);
@@ -70,13 +70,13 @@ public:
   void visitTag(const tags::Newline& tag);
 
   /* Objects */
-  json::Json visitObject(const objects::Value& val);
-  json::Json visitObject(const objects::Variable& var);
-  json::Json visitObject(const objects::MemberAccess& ma);
-  json::Json visitObject(const objects::ArrayAccess& aa);
-  json::Json visitObject(const objects::BinOp& binop);
-  json::Json visitObject(const objects::LogicalNot& obj);
-  json::Json visitObject(const objects::Pipe& pipe);
+  liquid::Value visitObject(const objects::Value& val);
+  liquid::Value visitObject(const objects::Variable& var);
+  liquid::Value visitObject(const objects::MemberAccess& ma);
+  liquid::Value visitObject(const objects::ArrayAccess& aa);
+  liquid::Value visitObject(const objects::BinOp& binop);
+  liquid::Value visitObject(const objects::LogicalNot& obj);
+  liquid::Value visitObject(const objects::Pipe& pipe);
 
 protected:
   const Template& model() const;
@@ -86,24 +86,24 @@ protected:
   void record(const EvaluationException& ex);
   virtual void log(const EvaluationException& ex);
 
-  std::string capture(const Template& tmplt, const json::Object& data);
+  std::string capture(const Template& tmplt, const liquid::Map& data);
   std::string capture(const std::vector<std::shared_ptr<templates::Node>>& nodes);
 
   /* Objects */
-  json::Json eval_value(const objects::Value& val);
-  json::Json eval_variable(const objects::Variable& var);
-  json::Json eval_memberaccess(const objects::MemberAccess& ma);
-  json::Json eval_arrayaccess(const objects::ArrayAccess& aa);
-  json::Json eval_binop(const objects::BinOp& binop);
-  json::Json eval_logicalnot(const objects::LogicalNot& op);
-  json::Json eval_pipe(const objects::Pipe& pipe);
+  liquid::Value eval_value(const objects::Value& val);
+  liquid::Value eval_variable(const objects::Variable& var);
+  liquid::Value eval_memberaccess(const objects::MemberAccess& ma);
+  liquid::Value eval_arrayaccess(const objects::ArrayAccess& aa);
+  liquid::Value eval_binop(const objects::BinOp& binop);
+  liquid::Value eval_logicalnot(const objects::LogicalNot& op);
+  liquid::Value eval_pipe(const objects::Pipe& pipe);
 
-  json::Json json_add(const json::Json& lhs, const json::Json& rhs) const;
-  json::Json json_sub(const json::Json& lhs, const json::Json& rhs) const;
-  json::Json json_mul(const json::Json& lhs, const json::Json& rhs) const;
-  json::Json json_div(const json::Json& lhs, const json::Json& rhs) const;
+  liquid::Value value_add(const liquid::Value& lhs, const liquid::Value& rhs) const;
+  liquid::Value value_sub(const liquid::Value& lhs, const liquid::Value& rhs) const;
+  liquid::Value value_mul(const liquid::Value& lhs, const liquid::Value& rhs) const;
+  liquid::Value value_div(const liquid::Value& lhs, const liquid::Value& rhs) const;
 
-  virtual json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args);
+  virtual liquid::Value applyFilter(const std::string& name, const liquid::Value& object, const std::vector<liquid::Value>& args);
 
 private:
   Context m_context;

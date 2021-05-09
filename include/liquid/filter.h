@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -7,7 +7,7 @@
 
 #include "liquid-defs.h"
 
-#include <json-toolkit/serialization.h>
+#include "liquid/value.h"
 
 namespace liquid
 {
@@ -16,18 +16,18 @@ namespace filters
 {
 
 template<typename R, typename T>
-json::Json apply(R(*f)(T), const json::Json& obj, const std::vector<json::Json>& args, json::Serializer& s)
+liquid::Value apply(R(*f)(T), const liquid::Value& obj, const std::vector<liquid::Value>& args)
 {
   using U = typename std::remove_const<typename std::remove_reference<T>::type>::type;
 
   if (args.size() != 0)
     throw std::runtime_error("Invalid argument count for filter");
 
-  return s.encode(f(s.decode<U>(obj)));
+  return f(obj.as<U>());
 }
 
 template<typename R, typename T1, typename T2>
-json::Json apply(R(*f)(T1, T2), const json::Json& obj, const std::vector<json::Json>& args, json::Serializer& s)
+liquid::Value apply(R(*f)(T1, T2), const liquid::Value& obj, const std::vector<liquid::Value>& args)
 {
   using U1 = typename std::remove_const<typename std::remove_reference<T1>::type>::type;
   using U2 = typename std::remove_const<typename std::remove_reference<T2>::type>::type;
@@ -35,11 +35,11 @@ json::Json apply(R(*f)(T1, T2), const json::Json& obj, const std::vector<json::J
   if (args.size() != 1)
     throw std::runtime_error("Invalid argument count for filter");
 
-  return s.encode(f(s.decode<U1>(obj), s.decode<U2>(args.at(0))));
+  return f(obj.as<U1>(), args.at(0).as<U2>());
 }
 
 template<typename R, typename T1, typename T2, typename T3>
-json::Json apply(R(*f)(T1, T2, T3), const json::Json& obj, const std::vector<json::Json>& args, json::Serializer& s)
+liquid::Value apply(R(*f)(T1, T2, T3), const liquid::Value& obj, const std::vector<liquid::Value>& args)
 {
   using U1 = typename std::remove_const<typename std::remove_reference<T1>::type>::type;
   using U2 = typename std::remove_const<typename std::remove_reference<T2>::type>::type;
@@ -48,7 +48,7 @@ json::Json apply(R(*f)(T1, T2, T3), const json::Json& obj, const std::vector<jso
   if (args.size() != 2)
     throw std::runtime_error("Invalid argument count for filter");
 
-  return s.encode(f(s.decode<U1>(obj), s.decode<U2>(args.at(0)), s.decode<U3>(args.at(1))));
+  return f(obj.as<U1>(), args.at(0).as<U2>(), args.at(1).as<U3>());
 }
 
 } // namespace filters

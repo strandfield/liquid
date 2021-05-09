@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -8,8 +8,6 @@
 #include "liquid/tag.h"
 
 #include "liquid/object.h"
-
-#include <json-toolkit/json.h>
 
 namespace liquid
 {

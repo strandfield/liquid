@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -308,25 +308,25 @@ public:
   }
 
 
-  static json::Json createLiteral(const Token& tok) noexcept
+  static liquid::Value createLiteral(const Token& tok) noexcept
   {
     assert(tok.kind == Token::BooleanLiteral || tok.kind == Token::IntegerLiteral || tok.kind == Token::StringLiteral);
 
     if (tok.kind == Token::BooleanLiteral)
     {
-      return json::Json{ tok == "true" };
+      return liquid::Value{ tok == "true" };
     }
     else if (tok.kind == Token::IntegerLiteral)
     {
-      return json::Json{ std::stoi(tok.toString()) };
+      return liquid::Value{ std::stoi(tok.toString()) };
     }
     else // tok.kind == Token::StringLiteral
     {
-      return json::Json(std::string(tok.text.begin() + 1, tok.text.end() - 1));
+      return liquid::Value(std::string(tok.text.begin() + 1, tok.text.end() - 1));
     }
   }
 
-  json::Json readLiteral()
+  liquid::Value readLiteral()
   {
     Token tok = vec::take_first(tokens);
 
@@ -340,7 +340,7 @@ public:
   {
     assert(tok.kind == Token::LeftBracket);
 
-    json::Array result;
+    liquid::Array result;
 
     while (tokens.front().kind != Token::RightBracket)
     {
@@ -761,7 +761,7 @@ void Parser::process_tag_else(const Token& keyword, std::vector<Token>& tokens)
     throw ParserException{ keyword.text.offset_, "Unexpected 'else' tag" };
 
   tags::If::Block block;
-  block.condition = std::make_shared<objects::Value>(json::Json(true));
+  block.condition = std::make_shared<objects::Value>(liquid::Value(true));
 
   stack().back()->as<tags::If>().blocks.push_back(block);
 }

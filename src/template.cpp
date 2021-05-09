@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -73,7 +73,7 @@ const std::string& Template::source() const
   return mSource;
 }
 
-std::string Template::render(const json::Object& data) const
+std::string Template::render(const liquid::Map& data) const
 {
   Renderer r;
   return r.render(*this, data);

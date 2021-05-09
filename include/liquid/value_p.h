@@ -33,6 +33,7 @@ public:
   std::vector<Value> values;
 
 public:
+  VectorValue();
   explicit VectorValue(std::vector<Value> vals);
 
   bool is_array() const override;
@@ -50,6 +51,7 @@ public:
   std::map<std::string, Value> dict;
 
 public:
+  MapValue();
   explicit MapValue(std::map<std::string, Value> m);
 
   bool is_map() const override;

@@ -1,8 +1,10 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 #include "liquid/context.h"
+
+#include <stdexcept>
 
 namespace liquid
 {
@@ -28,7 +30,7 @@ Context::Scope::Scope(Context& c, const Template& tmplt)
   c.scopes().back().template_ = &tmplt;
 }
 
-Context::Scope::Scope(Context& c, const Template& tmplt, const json::Object& data)
+Context::Scope::Scope(Context& c, const Template& tmplt, liquid::Map data)
   : Scope(c, tmplt)
 {
   c.scopes().back().data = data;
@@ -39,7 +41,7 @@ Context::Scope::~Scope()
   context_->scopes().pop_back();
 }
 
-json::Json& Context::Scope::operator[](const std::string& str)
+Value& Context::Scope::operator[](const std::string& str)
 {
   return context_->scopes().back().data[str];
 }

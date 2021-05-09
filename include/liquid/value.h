@@ -20,6 +20,8 @@ namespace liquid
 {
 
 class Value;
+class Array;
+class Map;
 
 class LIQUID_API IValue
 {
@@ -71,12 +73,15 @@ public:
   Value(const Value&) = default;
   ~Value() = default;
   
-  explicit Value(int n);
-  explicit Value(double x);
-  explicit Value(std::string str);
+  Value(nullptr_t);
+  Value(bool b);
+  Value(int n);
+  Value(double x);
+  Value(std::string str);
+  Value(const char* str);
 
-  explicit Value(std::vector<Value> vals);
-  explicit Value(std::map<std::string, Value> dict);
+  Value(std::vector<Value> vals);
+  Value(std::map<std::string, Value> dict);
 
   explicit Value(std::shared_ptr<IValue> impl);
 
@@ -86,6 +91,12 @@ public:
   bool isArray() const;
   bool isMap() const;
   bool isSimple() const;
+
+  Array toArray() const;
+  Map toMap() const;
+
+  std::type_index typeIndex() const;
+  void* data() const;
 
   template<typename T>
   bool is() const;
@@ -99,14 +110,68 @@ public:
   std::set<std::string> propertyNames() const;
   Value property(const std::string& name) const;
 
-  Value operator[](size_t index) const;
-  Value operator[](const std::string& name) const;
+  const std::shared_ptr<IValue>& impl() const;
+
+private:
+  std::shared_ptr<IValue> d;
+};
+
+class LIQUID_API Array
+{
+public:
+  Array();
+  Array(const Array&) = default;
+  ~Array() = default;
+
+  Array(std::vector<Value> vals);
+
+  explicit Array(std::shared_ptr<IValue> impl);
+
+  size_t length() const;
+  Value at(size_t index) const;
+
+  bool isWritable() const;
+  void push(Value val);
+
+  Value& operator[](size_t index);
+
+  operator Value() const;
 
   const std::shared_ptr<IValue>& impl() const;
 
 private:
   std::shared_ptr<IValue> d;
 };
+
+class LIQUID_API Map
+{
+public:
+  Map();
+  Map(const Map&) = default;
+  ~Map() = default;
+
+  Map(std::map<std::string, Value> dict);
+  Map(std::initializer_list<std::pair<const std::string, Value>>&& pairs);
+
+  explicit Map(std::shared_ptr<IValue> impl);
+
+  std::set<std::string> propertyNames() const;
+  Value property(const std::string& name) const;
+
+  bool isWritable() const;
+  void insert(const std::string& name, Value val);
+
+  Value& operator[](const std::string& name);
+
+  operator Value() const;
+
+  const std::shared_ptr<IValue>& impl() const;
+
+private:
+  std::shared_ptr<IValue> d;
+};
+
+LIQUID_API int compare(const Value& lhs, const Value& rhs);
 
 } // namespace liquid
 

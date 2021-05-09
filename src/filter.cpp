@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -9,12 +9,10 @@
 namespace liquid
 {
 
-json::Json ArrayFilters::applyAny(const std::string& name, const json::Array& vec, const std::vector<json::Json>& args)
+liquid::Value ArrayFilters::applyAny(const std::string& name, const liquid::Array& vec, const std::vector<liquid::Value>& args)
 {
-  json::Serializer serializer;
-
   if (name == "join")
-    return filters::apply(&join, vec, args, serializer);
+    return join(vec, args.front());
   else if (name == "concat")
     return concat(vec, args.front().toArray());
   else if (name == "first")
@@ -22,7 +20,7 @@ json::Json ArrayFilters::applyAny(const std::string& name, const json::Array& ve
   else if (name == "last")
     return last(vec);
   else if (name == "map")
-    return map(vec, args.front().toString());
+    return map(vec, args.front().as<std::string>());
   else if (name == "push")
     return push(vec, args.front());
   else if (name == "pop")
@@ -52,9 +50,22 @@ std::string ArrayFilters::join(const std::vector<std::string>& strings, const st
   return result;
 }
 
-json::Array ArrayFilters::concat(const json::Array& a, const json::Array& b)
+std::string ArrayFilters::join(const liquid::Array& vec, const liquid::Value& sep)
 {
-  json::Array result;
+  std::vector<std::string> strings;
+
+  for (size_t i(0); i < vec.length(); ++i)
+  {
+    if (vec.at(i).is<std::string>())
+      strings.push_back(vec.at(i).as<std::string>());
+  }
+
+  return join(strings, sep.is<std::string>() ? sep.as<std::string>() : std::string(""));
+}
+
+liquid::Array ArrayFilters::concat(const liquid::Array& a, const liquid::Array& b)
+{
+  liquid::Array result;
 
   for (int i(0); i < a.length(); ++i)
     result.push(a.at(i));
@@ -65,29 +76,29 @@ json::Array ArrayFilters::concat(const json::Array& a, const json::Array& b)
   return result;
 }
 
-json::Json ArrayFilters::first(const json::Array& a)
+liquid::Value ArrayFilters::first(const liquid::Array& a)
 {
   return a.at(0);
 }
 
-json::Json ArrayFilters::last(const json::Array& a)
+liquid::Value ArrayFilters::last(const liquid::Array& a)
 {
   return a.at(a.length() - 1);
 }
 
-json::Array ArrayFilters::map(const json::Array& a, const std::string& field)
+liquid::Array ArrayFilters::map(const liquid::Array& a, const std::string& field)
 {
-  json::Array result;
+  liquid::Array result;
 
   for (int i(0); i < a.length(); ++i)
-    result.push(a.at(i).toObject().data().at(field));
+    result.push(a.at(i).property(field));
 
   return result;
 }
 
-json::Array ArrayFilters::push(const json::Array& a, const json::Json& elem)
+liquid::Array ArrayFilters::push(const liquid::Array& a, const liquid::Value& elem)
 {
-  json::Array result;
+  liquid::Array result;
 
   for (int i(0); i < a.length(); ++i)
     result.push(a.at(i));
@@ -97,9 +108,9 @@ json::Array ArrayFilters::push(const json::Array& a, const json::Json& elem)
   return result;
 }
 
-json::Array ArrayFilters::pop(const json::Array& a)
+liquid::Array ArrayFilters::pop(const liquid::Array& a)
 {
-  json::Array result;
+  liquid::Array result;
 
   for (int i(0); i < a.length() - 1; ++i)
     result.push(a.at(i));
@@ -107,7 +118,7 @@ json::Array ArrayFilters::pop(const json::Array& a)
   return result;
 }
 
-json::Json BuiltinFilters::apply(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
+liquid::Value BuiltinFilters::apply(const std::string& name, const liquid::Value& object, const std::vector<liquid::Value>& args)
 {
   if (object.isArray())
   {
