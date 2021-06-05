@@ -7,6 +7,10 @@
 #include "liquid/context.h"
 #include "liquid/filters.h"
 
+/*!
+ * \namespace liquid
+ */
+
 namespace liquid
 {
 
@@ -17,17 +21,33 @@ Renderer::Error::Error(size_t off, std::string mssg)
 
 }
 
+/*!
+ * \class Renderer
+ */
+
+/*!
+ * \fn Renderer()
+ * \brief constructs a renderer
+ */
 Renderer::Renderer()
   : m_template(nullptr)
 {
 
 }
 
+/*!
+ * \fn ~Renderer()
+ * \brief destroy the renderer
+ */
 Renderer::~Renderer()
 {
   
 }
 
+/*!
+ * \fn void reset()
+ * \brief resets the renderer
+ */
 void Renderer::reset()
 {
   m_result.clear();
@@ -38,32 +58,69 @@ void Renderer::reset()
   context().flags() = 0;
 }
 
+/*!
+ * \fn Context& context()
+ * \brief returns the renderer context
+ */
 Context& Renderer::context()
 {
   return m_context;
 }
 
+/*!
+ * \fn std::map<std::string, Template>& templates()
+ * \brief returns the renderer built-in templates
+ * 
+ * These templates can be used with an 'include' tag.
+ */
 std::map<std::string, Template>& Renderer::templates()
 {
   return m_templates;
 }
 
+/*!
+ * \fn const std::map<std::string, Template>& templates() const
+ * \brief returns the renderer built-in templates
+ */
 const std::map<std::string, Template>& Renderer::templates() const
 {
   return m_templates;
 }
 
+/*!
+ * \fn const std::vector<Renderer::Error>& errors() const
+ * \brief returns the errors generated during the last call rendering
+ */
 const std::vector<Renderer::Error>& Renderer::errors() const
 {
   return m_errors;
 }
 
+/*!
+ * \fn const Template& model() const
+ * \brief returns the template that is currently used
+ * 
+ * This function can only be called during rendering, i.e. inside a 
+ * call of \c{render()}.
+ */
 const Template& Renderer::model() const
 {
   assert(m_template != nullptr);
   return *m_template;
 }
 
+/*!
+ * \fn std::string render(const Template& t, const liquid::Map& data)
+ * \param the input template
+ * \param the input data
+ * \brief renders a template using the given data
+ *
+ * This function first resets the renderer.
+ * 
+ * Any error generated during rendering is written in the output.
+ * You can check programmatically if any error occured with a call 
+ * to \c{errors()}.
+ */
 std::string Renderer::render(const Template& t, const liquid::Map& data)
 {
   reset();
@@ -689,5 +746,13 @@ liquid::Value Renderer::visitObject(const objects::Pipe& pipe)
 {
   return eval_pipe(pipe);
 }
+
+/*!
+ * \endclass
+ */
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid

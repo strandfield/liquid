@@ -10,6 +10,10 @@
 #include <fstream>
 #include <sstream>
 
+/*!
+ * \namespace liquid
+ */
+
 namespace liquid
 {
 
@@ -45,6 +49,10 @@ bool TextNode::isText() const
 
 } // namespace templates
 
+/*!
+ * \class Template
+ */
+
 Template::Template()
 {
 
@@ -63,22 +71,44 @@ Template::~Template()
 
 }
 
+/*!
+ * \fn const std::string& filePath() const
+ * \brief returns the template's file path
+ * 
+ * This function returns the filepath that was passed through the constructor.
+ */
 const std::string& Template::filePath() const
 {
   return mFilePath;
 }
 
+/*!
+ * \fn const std::string& source() const
+ * \brief returns the original source of the template
+ */
 const std::string& Template::source() const
 {
   return mSource;
 }
 
+/*!
+ * \fn std::string render(const liquid::Map& data) const
+ * \param rendering data
+ * \brief renders the template
+ * 
+ * This function uses the default Renderer.
+ */
 std::string Template::render(const liquid::Map& data) const
 {
   Renderer r;
   return r.render(*this, data);
 }
 
+/*!
+ * \fn std::pair<int, int> linecol(size_t off) const
+ * \param offset in bytes
+ * \brief returns the line an column number of the character at a given offset
+ */
 std::pair<int, int> Template::linecol(size_t off) const
 {
   int line = 0;
@@ -99,6 +129,11 @@ std::pair<int, int> Template::linecol(size_t off) const
   return { line, col };
 }
 
+/*!
+ * \fn std::string getLine(size_t off) const
+ * \param offset in bytes
+ * \brief returns the line containing the character at a given offset
+ */
 std::string Template::getLine(size_t off) const
 {
   size_t begin = off;
@@ -117,6 +152,11 @@ inline static bool is_space(char c)
   return c == ' ' || c == '\r' || c == '\t';
 }
 
+/*!
+ * \fn void lstrip(std::string& str) noexcept
+ * \param input string
+ * \brief removes whitespaces at the beginning of string
+ */
 void Template::lstrip(std::string& str) noexcept
 {
   size_t i = 0;
@@ -135,6 +175,11 @@ void Template::lstrip(std::string& str) noexcept
   }
 }
 
+/*!
+ * \fn void rstrip(std::string& str) noexcept
+ * \param input string
+ * \brief removes trailing whitespaces from the string
+ */
 void Template::rstrip(std::string& str) noexcept
 {
   if (str.empty())
@@ -202,6 +247,12 @@ static void strip_whitespaces_at_tag(const std::vector<std::shared_ptr<templates
   }
 }
 
+/*!
+ * \fn void stripWhitespacesAtTag()
+ * \brief removes extra whitespaces from the template
+ *
+ * This function removes whitespaces before and after each 'tag' node.
+ */
 void Template::stripWhitespacesAtTag()
 {
   strip_whitespaces_at_tag(mNodes, false, false);
@@ -247,17 +298,42 @@ static void skip_whitespaces_at_tag(const std::vector<std::shared_ptr<templates:
   }
 }
 
+/*!
+ * \fn void skipWhitespacesAfterTag()
+ * \brief removes extra whitespaces from the template
+ * 
+ * This function removes whitespaces after each 'tag' node.
+ */
 void Template::skipWhitespacesAfterTag()
 {
   skip_whitespaces_at_tag(mNodes, false);
 }
 
+/*!
+ * \endclass
+ */
+
+/*!
+ * \fn Template parse(const std::string& str, std::string filepath = {})
+ * \param template source
+ * \param optional filepath from which the source was read
+ * \brief parse a template
+ *
+ * This function throws ParserException if parsing fails.
+ */
 Template parse(const std::string& str, std::string filepath)
 {
   liquid::Parser lp;
   return Template{ str, lp.parse(str), filepath };
 }
 
+/*!
+ * \fn Template parseFile(std::string filepath)
+ * \param filepath of the template to parse
+ * \brief parse a template
+ *
+ * This function uses \c{parse()} internally.
+ */
 Template parseFile(std::string filepath)
 {
   std::ifstream file{ filepath };
@@ -265,5 +341,9 @@ Template parseFile(std::string filepath)
   buffer << file.rdbuf();
   return liquid::parse(buffer.str(), std::move(filepath));
 }
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid

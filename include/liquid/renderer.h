@@ -12,9 +12,17 @@
 
 #include <map>
 
+/*!
+ * \namespace liquid
+ */
+
 namespace liquid
 {
 
+/*!
+ * \class Renderer
+ * \brief base class for renderers
+ */
 class LIQUID_API Renderer
 {
 public:
@@ -112,6 +120,14 @@ private:
   std::vector<Error> m_errors;
   std::map<std::string, Template> m_templates;
 };
+
+/*!
+ * \endclass
+ */
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid
 

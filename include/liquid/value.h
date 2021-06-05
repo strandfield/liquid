@@ -16,12 +16,35 @@
 #include <typeinfo>
 #include <vector>
 
+/*!
+ * \namespace liquid
+ */
+
 namespace liquid
 {
 
 class Value;
 class Array;
 class Map;
+
+/*!
+ * \class IValue
+ * \brief provides an interface for the Value class
+ * 
+ * You can derive from this class to expose your C++ type to the Renderer class 
+ * without manually constructing them using Map and Array.
+ * 
+ * There are typically two scenarios.
+ * 
+ * If you have a C++ object, you can expose it to the renderer by storing it in an IValue 
+ * and overriding \c{is_map()}, \c{propertyNames()} and \c{property()}.
+ * 
+ * If you have a list of C++ objects, you can expose it ot the renderer by storing it in an 
+ * IValue and overriding \c{is_array()}, \c{length()} and \c{at()}.
+ * 
+ * In both cases, you will also need to override \c{type_index()} and \c{data()}.
+ * This will allow you to retrieve your C++ object with \c{Value::as<T>()}.
+ */
 
 class LIQUID_API IValue
 {
@@ -32,7 +55,12 @@ public:
   virtual bool is_array() const;
   virtual bool is_map() const;
 
+  /*!
+   * \fn virtual std::type_index type_index() const = 0
+   * \brief returns the type_index of the data
+   */
   virtual std::type_index type_index() const = 0;
+
   virtual void* data();
 
   virtual size_t length() const;
@@ -41,6 +69,10 @@ public:
   virtual std::set<std::string> propertyNames() const;
   virtual Value property(const std::string& name) const;
 };
+
+/*!
+ * \endclass
+ */
 
 template<typename T>
 class GenericValue : public IValue
@@ -65,6 +97,11 @@ public:
     return reinterpret_cast<void*>(&value);
   }
 };
+
+/*!
+ * \class Value
+ * \brief holds a value that can by the renderer
+ */
 
 class LIQUID_API Value
 {
@@ -116,6 +153,15 @@ private:
   std::shared_ptr<IValue> d;
 };
 
+/*!
+ * \endclass
+ */
+
+/*!
+ * \class Array
+ * \brief provides an array of value
+ */
+
 class LIQUID_API Array
 {
 public:
@@ -142,6 +188,15 @@ public:
 private:
   std::shared_ptr<IValue> d;
 };
+
+/*!
+ * \endclass
+ */
+
+ /*!
+  * \class Map
+  * \brief provides a key/value container
+  */
 
 class LIQUID_API Map
 {
@@ -171,6 +226,10 @@ private:
   std::shared_ptr<IValue> d;
 };
 
+/*!
+ * \endclass
+ */
+
 LIQUID_API int compare(const Value& lhs, const Value& rhs);
 
 } // namespace liquid
@@ -191,6 +250,10 @@ inline T& Value::as() const
   void* data = d->data();
   return *reinterpret_cast<T*>(data);
 }
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid
 
