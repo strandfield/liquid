@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -7,7 +7,7 @@
 
 #include "liquid/liquid-defs.h"
 
-#include <json-toolkit/json.h>
+#include "liquid/value.h"
 
 #include <vector>
 
@@ -43,10 +43,10 @@ public:
   {
     Scope(Context& c, ScopeKind k);
     Scope(Context& c, const Template& tmplt);
-    Scope(Context& c, const Template& tmplt, const json::Object& data);
+    Scope(Context& c, const Template& tmplt, liquid::Map data);
     ~Scope();
 
-    json::Json& operator[](const std::string& str);
+    Value& operator[](const std::string& str);
 
   private:
     Context* context_;
@@ -55,7 +55,7 @@ public:
   struct ScopeData
   {
     ScopeKind kind = GlobalScope;
-    json::Object data;
+    liquid::Map data;
     const Template* template_ = nullptr;
   };
 

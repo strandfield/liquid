@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -19,7 +19,7 @@ public:
   ~Object() = default;
 
   bool isObject() const override { return true; }
-  virtual json::Json accept(Renderer& renderer) = 0;
+  virtual liquid::Value accept(Renderer& renderer) = 0;
 };
 
 } // namespace liquid

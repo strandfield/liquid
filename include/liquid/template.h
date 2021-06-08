@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -7,12 +7,16 @@
 
 #include "liquid-defs.h"
 
-#include <json-toolkit/json.h>
+#include "liquid/value.h"
 
 #include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
+
+/*!
+ * \namespace liquid
+ */
 
 namespace liquid
 {
@@ -60,6 +64,40 @@ public:
 
 } // namespace templates
 
+/*!
+ * \class Template
+ * \brief provides a render template
+ * 
+ * A template consists of a list of nodes, each node being of the 3 following types:
+ * \begin{list}
+ *   \li text
+ *   \li tag (\{\% \%\})
+ *   \li object (\{\{ \}\})
+ * \end{list}
+ * 
+ * Text nodes are copied verbatim to the output.
+ * 
+ * Tag nodes represents instructions and allow control flow to alter the output.
+ * 
+ * Object nodes are variables are expressions that are ultimately converted to 
+ * a string and inserted into the output string.
+ * 
+ * If you use the built-in parser to create a Template, the following tags are 
+ * supported:
+ * \begin{list}
+ *   \li assign
+ *   \li capture
+ *   \li for
+ *   \li if
+ *   \li break
+ *   \li continue
+ *   \li eject
+ *   \li discard
+ *   \li include
+ *   \li newline
+ * \end{list}
+ * 
+ */
 class LIQUID_API Template
 {
 public:
@@ -76,10 +114,10 @@ public:
   const std::string& source() const;
   const std::vector<std::shared_ptr<templates::Node>>& nodes() const { return mNodes; }
 
-  std::string render(const json::Object& data) const;
+  std::string render(const liquid::Map& data) const;
 
   template<typename R>
-  std::string render(const json::Object& data) const
+  std::string render(const liquid::Map& data) const
   {
     R renderer;
     return renderer.render(*this, data);
@@ -103,8 +141,16 @@ private:
   std::vector<std::shared_ptr<templates::Node>> mNodes;
 };
 
+/*!
+ * \endclass
+ */
+
 LIQUID_API Template parse(const std::string& str, std::string filepath = {});
 LIQUID_API Template parseFile(std::string filepath);
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid
 

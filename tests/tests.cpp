@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -14,8 +14,7 @@ TEST(Liquid, hello) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
-  data["name"] = "Alice";
+  liquid::Map data = { {"name", "Alice"} };
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "Hello Alice!");
@@ -27,9 +26,7 @@ TEST(Liquid, greetings) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
-  data["name"] = "Bob";
-  data["age"] = 18;
+  liquid::Map data = { {"name", "Bob"}, {"age", 18} };
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "Hi! My name is Bob and I am 18 years old.");
@@ -41,12 +38,11 @@ TEST(Liquid, fruits) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array fruits;
+  liquid::Array fruits;
   fruits.push("apples");
   fruits.push("strawberries");
   fruits.push("bananas");
-  json::Object data = {};
-  data["fruits"] = fruits;
+  liquid::Map data = { {"fruits", fruits} };
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "I love apples, strawberries, bananas!");
@@ -58,15 +54,14 @@ TEST(Liquid, controlflow) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array numbers;
+  liquid::Array numbers;
   numbers.push(1);
   numbers.push(2);
   numbers.push(5);
   numbers.push(4);
   numbers.push(12);
   numbers.push(10);
-  json::Object data = {};
-  data["numbers"] = numbers;
+  liquid::Map data = { {"numbers", numbers} };
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "54");
@@ -79,11 +74,11 @@ TEST(Liquid, assign_global) {
   liquid::Template tmplt = liquid::parse(str);
 
   liquid::Renderer renderer;
-  json::Object data;
+  liquid::Map data;
   renderer.render(tmplt, data);
 
-  ASSERT_EQ(data["foo"].at(0).toString(), "bar");
-  ASSERT_EQ(data["foo"].at(1).toInt(), 0);
+  ASSERT_EQ(data["foo"].at(0).as<std::string>(), "bar");
+  ASSERT_EQ(data["foo"].at(1).as<int>(), 0);
 }
 
 TEST(Liquid, logic) {
@@ -96,7 +91,7 @@ TEST(Liquid, logic) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
+  liquid::Map data = {};
   data["x"] = true;
   data["y"] = false;
   data["a"] = 5;
@@ -114,7 +109,7 @@ TEST(Liquid, math) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
+  liquid::Map data = {};
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "13");
@@ -126,20 +121,20 @@ TEST(Liquid, arrayaccess) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array numbers;
+  liquid::Array numbers;
   numbers.push(1);
   numbers.push(2);
   numbers.push(3);
-  json::Object data = {};
+  liquid::Map data = {};
   data["numbers"] = numbers;
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "2");
 }
 
-static json::Json createContact(const std::string& name, int age, bool restricted = false)
+static liquid::Map createContact(const std::string& name, int age, bool restricted = false)
 {
-  json::Object obj = {};
+  liquid::Map obj = {};
   obj["name"] = name;
   obj["age"] = age;
 
@@ -163,12 +158,12 @@ TEST(Liquid, contacts) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array contacts;
+  liquid::Array contacts;
   contacts.push(createContact("Bob", 19));
   contacts.push(createContact("Alice", 18));
   contacts.push(createContact("Eve", 22, true));
 
-  json::Object data = {};
+  liquid::Map data = {};
   data["contacts"] = contacts;
   std::string result = tmplt.render(data);
 
@@ -196,7 +191,7 @@ TEST(Liquid, comments) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  std::string result = tmplt.render(json::Object{});
+  std::string result = tmplt.render(liquid::Map{});
 
   ASSERT_EQ(result, "Hello there!\n  You're a bold 1.");
 }
@@ -207,7 +202,7 @@ TEST(Liquid, eject) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array numbers;
+  liquid::Array numbers;
   numbers.push(1);
   numbers.push(2);
   numbers.push(3);
@@ -215,7 +210,7 @@ TEST(Liquid, eject) {
   numbers.push(5);
   numbers.push(6);
   numbers.push(7);
-  json::Object data = {};
+  liquid::Map data = {};
   data["numbers"] = numbers;
   std::string result = tmplt.render(data);
 
@@ -228,7 +223,7 @@ TEST(Liquid, discard) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array numbers;
+  liquid::Array numbers;
   numbers.push(1);
   numbers.push(2);
   numbers.push(3);
@@ -236,7 +231,7 @@ TEST(Liquid, discard) {
   numbers.push(5);
   numbers.push(6);
   numbers.push(7);
-  json::Object data = {};
+  liquid::Map data = {};
   data["numbers"] = numbers;
   std::string result = tmplt.render(data);
 
@@ -252,9 +247,7 @@ class CustomRenderer : public liquid::Renderer
 {
 public:
 
-  json::Json applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args) override;
-
-  json::Serializer serializer;
+  liquid::Value applyFilter(const std::string& name, const liquid::Value& object, const std::vector<liquid::Value>& args) override;
 };
 
 static std::string filter_uppercase(const std::string& str)
@@ -275,14 +268,14 @@ static std::string filter_substr(std::string str, int pos, int count)
   return str.substr(pos, count);
 }
 
-json::Json CustomRenderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
+liquid::Value CustomRenderer::applyFilter(const std::string& name, const liquid::Value& object, const std::vector<liquid::Value>& args)
 {
   if(name == "uppercase")
-    return liquid::filters::apply(filter_uppercase, object, args, serializer);
+    return liquid::filters::apply(filter_uppercase, object, args);
   else if(name == "mul")
-    return liquid::filters::apply(filter_mul, object, args, serializer);
+    return liquid::filters::apply(filter_mul, object, args);
   else if (name == "substr")
-    return liquid::filters::apply(filter_substr, object, args, serializer);
+    return liquid::filters::apply(filter_substr, object, args);
 
   return Renderer::applyFilter(name, object, args);
 }
@@ -293,7 +286,7 @@ TEST(Liquid, filters) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
+  liquid::Map data = {};
   data["money"] = 5;
   std::string result = tmplt.render<CustomRenderer>(data);
 
@@ -311,7 +304,7 @@ TEST(Liquid, array_push_pop) {
    
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
+  liquid::Map data = {};
   std::string result = tmplt.render(data);
 
   ASSERT_EQ(result, "1,2,3");
@@ -323,30 +316,30 @@ TEST(Liquid, array_filters) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Array persons;
+  liquid::Array persons;
 
   {
-    json::Json spongebob;
+    liquid::Map spongebob;
     spongebob["name"] = "SpongeBob";
     spongebob["surname"] = "SquarePants";
     persons.push(spongebob);
   }
 
   {
-    json::Json patrick;
+    liquid::Map patrick;
     patrick["name"] = "Patrick";
     patrick["surname"] = "Star";
     persons.push(patrick);
   }
 
   {
-    json::Json squidward;
+    liquid::Map squidward;
     squidward["name"] = "Squidward";
     squidward["surname"] = "Tentacles";
     persons.push(squidward);
   }
 
-  json::Object data = {};
+  liquid::Map data = {};
   data["persons"] = persons;
   std::string result = tmplt.render(data);
 
@@ -366,7 +359,7 @@ TEST(Liquid, manual_whitespace_control) {
 
     liquid::Template tmplt = liquid::parse(str);
 
-    json::Object data = {};
+    liquid::Map data = {};
     std::string result = tmplt.render(data);
 
     ASSERT_EQ(result, "\n\n  Wow, John G.Chalmers - Smith, you have a long name!\n");
@@ -388,10 +381,9 @@ TEST(Liquid, manual_whitespace_control) {
 
     liquid::Template tmplt = liquid::parse(str);
 
-    json::Object data = {};
-    data["people"] = json::Array();
-    data["people"].push("Bob");
-    data["people"].push("Alice");
+    liquid::Map data = {};
+    liquid::Array people;
+    data["people"] = liquid::Array({"Bob", "Alice"});
 
     tmplt.skipWhitespacesAfterTag();
     std::string result = tmplt.render(data);
@@ -409,7 +401,7 @@ TEST(Liquid, include) {
 
     liquid::Template tmplt = liquid::parse(str);
 
-    json::Object data = {};
+    liquid::Map data = {};
     std::string result = tmplt.render(data);
 
     ASSERT_EQ(result, "");
@@ -423,7 +415,7 @@ TEST(Liquid, include) {
 
     liquid::Template tmplt = liquid::parse(str);
 
-    json::Object data = {};
+    liquid::Map data = {};
     data["name"] = "World";
     std::string result = renderer.render(tmplt, data);
 
@@ -444,7 +436,7 @@ TEST(Liquid, include) {
 
     liquid::Template tmplt = liquid::parse(str);
 
-    json::Object data = {};
+    liquid::Map data = {};
     std::string result = renderer.render(tmplt, data);
 
     ASSERT_EQ(result, "falsetrue");
@@ -457,11 +449,11 @@ TEST(Liquid, capture) {
 
   liquid::Template tmplt = liquid::parse(str);
 
-  json::Object data = {};
+  liquid::Map data = {};
   std::string result = tmplt.render(data);
 
   ASSERT_TRUE(result.empty());
-  ASSERT_EQ(data["text"].toString(), "You owe me 35$!");
+  ASSERT_EQ(data["text"].as<std::string>(), "You owe me 35$!");
 }
 
 TEST(Liquid, error) {
@@ -471,7 +463,7 @@ TEST(Liquid, error) {
   liquid::Template tmplt = liquid::parse(str);
 
   liquid::Renderer renderer;
-  json::Object data = {};
+  liquid::Map data = {};
   std::string result = renderer.render(tmplt, data);
 
   ASSERT_TRUE(result.find("{!") == 0);

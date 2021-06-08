@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Vincent Chambrin
+// Copyright (C) 2019-2021 Vincent Chambrin
 // This file is part of the liquid project
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -7,7 +7,9 @@
 #include "liquid/context.h"
 #include "liquid/filters.h"
 
-#include <json-toolkit/stringify.h>
+/*!
+ * \namespace liquid
+ */
 
 namespace liquid
 {
@@ -19,17 +21,33 @@ Renderer::Error::Error(size_t off, std::string mssg)
 
 }
 
+/*!
+ * \class Renderer
+ */
+
+/*!
+ * \fn Renderer()
+ * \brief constructs a renderer
+ */
 Renderer::Renderer()
   : m_template(nullptr)
 {
 
 }
 
+/*!
+ * \fn ~Renderer()
+ * \brief destroy the renderer
+ */
 Renderer::~Renderer()
 {
   
 }
 
+/*!
+ * \fn void reset()
+ * \brief resets the renderer
+ */
 void Renderer::reset()
 {
   m_result.clear();
@@ -40,33 +58,70 @@ void Renderer::reset()
   context().flags() = 0;
 }
 
+/*!
+ * \fn Context& context()
+ * \brief returns the renderer context
+ */
 Context& Renderer::context()
 {
   return m_context;
 }
 
+/*!
+ * \fn std::map<std::string, Template>& templates()
+ * \brief returns the renderer built-in templates
+ * 
+ * These templates can be used with an 'include' tag.
+ */
 std::map<std::string, Template>& Renderer::templates()
 {
   return m_templates;
 }
 
+/*!
+ * \fn const std::map<std::string, Template>& templates() const
+ * \brief returns the renderer built-in templates
+ */
 const std::map<std::string, Template>& Renderer::templates() const
 {
   return m_templates;
 }
 
+/*!
+ * \fn const std::vector<Renderer::Error>& errors() const
+ * \brief returns the errors generated during the last call rendering
+ */
 const std::vector<Renderer::Error>& Renderer::errors() const
 {
   return m_errors;
 }
 
+/*!
+ * \fn const Template& model() const
+ * \brief returns the template that is currently used
+ * 
+ * This function can only be called during rendering, i.e. inside a 
+ * call of \c{render()}.
+ */
 const Template& Renderer::model() const
 {
   assert(m_template != nullptr);
   return *m_template;
 }
 
-std::string Renderer::render(const Template& t, const json::Object& data)
+/*!
+ * \fn std::string render(const Template& t, const liquid::Map& data)
+ * \param the input template
+ * \param the input data
+ * \brief renders a template using the given data
+ *
+ * This function first resets the renderer.
+ * 
+ * Any error generated during rendering is written in the output.
+ * You can check programmatically if any error occured with a call 
+ * to \c{errors()}.
+ */
+std::string Renderer::render(const Template& t, const liquid::Map& data)
 {
   reset();
 
@@ -120,22 +175,94 @@ void Renderer::process(const std::shared_ptr<Template::Node>& n)
   }
 }
 
-std::string Renderer::defaultStringify(const json::Json& val)
+static std::string stringify_value(const liquid::Value& val);
+
+static std::string stringify_map(const liquid::Map& map)
+{
+  std::set<std::string> names = map.propertyNames();
+
+  if (names.empty())
+    return "{}";
+
+  std::string result;
+
+  result.push_back('{');
+
+  for (const auto& n : names)
+  {
+    result += "\"" + n +"\": " + stringify_value(map.property(n)) + ", ";
+  }
+
+  result.pop_back();
+  result.pop_back();
+
+  result.push_back('}');
+
+  return result;
+}
+
+static std::string stringify_array(const liquid::Array& vec)
+{
+  std::string result;
+
+  result.push_back('[');
+
+  for (size_t i(0); i < vec.length(); ++i)
+  {
+    result += stringify_value(vec.at(i)) + ", ";
+  }
+
+  if (vec.length() > 0)
+  {
+    result.pop_back();
+    result.pop_back();
+  }
+
+  result.push_back(']');
+
+  return result;
+}
+
+static std::string stringify_value(const liquid::Value& val)
+{
+  if (val.is<std::string>())
+    return "\"" + val.as<std::string>() + "\"";
+  else if (val.is<bool>())
+    return val.as<bool>() ? "true" : "false";
+  else if (val.is<int>())
+    return StringBackend::from_integer(val.as<int>());
+  else if (val.is<double>())
+    return StringBackend::from_number(val.as<double>());
+  else if (val.isMap())
+    return stringify_map(val.toMap());
+  else if (val.isArray())
+    return stringify_array(val.toArray());
+  else
+    return "";
+}
+
+std::string Renderer::defaultStringify(const liquid::Value& val)
 {
   if (val.isNull())
     return {};
 
-  if (val.isString())
-    return val.toString();
-  else if (val.isInteger())
-    return StringBackend::from_integer(val.toInt());
-  else if (val.isNumber())
-    return StringBackend::from_number(val.toNumber());
+  if (val.is<std::string>())
+    return val.as<std::string>();
+  else if (val.is<bool>())
+    return val.as<bool>() ? "true" : "false";
+  else if (val.is<int>())
+    return StringBackend::from_integer(val.as<int>());
+  else if (val.is<double>())
+    return StringBackend::from_number(val.as<double>());
+  else if (val.isMap())
+    return stringify_map(val.toMap());
+  else if (val.isArray())
+    return stringify_array(val.toArray());
   else
-    return json::stringify(val);
+    return {};
 }
 
-std::string Renderer::stringify(const json::Json & val)
+std::string Renderer::stringify(const liquid::Value& val)
 {
   return defaultStringify(val);
 }
@@ -173,7 +300,7 @@ void Renderer::log(const EvaluationException& ex)
   }
 }
 
-std::string Renderer::capture(const Template& tmplt, const json::Object& data)
+std::string Renderer::capture(const Template& tmplt, const liquid::Map& data)
 {
   Context::Scope capture_scope{ context(), tmplt, data };
   return capture(tmplt.nodes());
@@ -191,20 +318,20 @@ std::string Renderer::capture(const std::vector<std::shared_ptr<templates::Node>
   return captured;
 }
 
-bool Renderer::evalCondition(const json::Json& val)
+bool Renderer::evalCondition(const liquid::Value& val)
 {
-  return val.isBoolean() ? val.toBool() :
-    (val.isInteger() ? val.toInt() != 0 : !val.isNull());
+  return val.is<bool>() ? val.as<bool>() :
+    (val.is<int>() ? val.as<int>() != 0 : !val.isNull());
 }
 
-json::Json Renderer::eval(const std::shared_ptr<Object>& obj)
+liquid::Value Renderer::eval(const std::shared_ptr<Object>& obj)
 {
   return obj->accept(*this);
 }
 
-std::vector<json::Json> Renderer::eval(const std::vector<std::shared_ptr<Object>>& objects)
+std::vector<liquid::Value> Renderer::eval(const std::vector<std::shared_ptr<Object>>& objects)
 {
-  std::vector<json::Json> result;
+  std::vector<liquid::Value> result;
   result.reserve(objects.size());
 
   for (auto obj : objects)
@@ -213,45 +340,45 @@ std::vector<json::Json> Renderer::eval(const std::vector<std::shared_ptr<Object>
   return result;
 }
 
-json::Json Renderer::eval_value(const objects::Value& val)
+liquid::Value Renderer::eval_value(const objects::Value& val)
 {
   return val.value;
 }
 
-json::Json Renderer::eval_variable(const objects::Variable& var)
+liquid::Value Renderer::eval_variable(const objects::Variable& var)
 {
   for (int i = static_cast<int>(context().scopes().size()) - 1; i >= 0; --i)
   {
-    const json::Object data = context().scopes().at(i).data;
+    const auto& data = context().scopes().at(i).data;
     
-    json::Json val = data[var.name];
+    liquid::Value val = data.property(var.name);
 
-    if (val != nullptr)
+    if (!val.isNull())
       return val;
   }
   
   return nullptr;
 }
 
-json::Json Renderer::eval_memberaccess(const objects::MemberAccess& ma)
+liquid::Value Renderer::eval_memberaccess(const objects::MemberAccess& ma)
 {
-  const json::Json obj = eval(ma.object);
+  const liquid::Value obj = eval(ma.object);
 
   if (obj.isArray())
   {
     if (ma.name == "size" || ma.name == "length")
-      return json::Json(obj.length());
+      return liquid::Value(int(obj.length()));
     else
       return nullptr;
   }
-  else if (obj.isObject())
+  else if (obj.isMap())
   {
-    return obj[ma.name];
+    return obj.property(ma.name);
   }
-  else if (obj.isString())
+  else if (obj.is<std::string>())
   {
     if (ma.name == "size" || ma.name == "length")
-      return json::Json(static_cast<int>(obj.toString().size()));
+      return static_cast<int>(obj.as<std::string>().size());
     else
       return nullptr;
   }
@@ -261,24 +388,24 @@ json::Json Renderer::eval_memberaccess(const objects::MemberAccess& ma)
   }
 }
 
-json::Json Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
+liquid::Value Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
 {
-  const json::Json obj = eval(aa.object);
-  const json::Json index = eval(aa.index);
+  const liquid::Value obj = eval(aa.object);
+  const liquid::Value index = eval(aa.index);
 
-  if (index.isInteger())
+  if (index.is<int>())
   {
     if (!obj.isArray())
       throw EvaluationException{ "Value is not an array", context().currentTemplate(),  aa.object->offset() };
 
-    return obj.at(index.toInt());
+    return obj.at(index.as<int>());
   }
-  else if (index.isString())
+  else if (index.is<std::string>())
   {
-    if (!obj.isObject())
+    if (!obj.isMap())
       throw EvaluationException{ "Value is not an object",  context().currentTemplate(), aa.object->offset() };
 
-    return obj[index.toString()];
+    return obj.property(index.as<std::string>());
   }
   else
   {
@@ -286,7 +413,7 @@ json::Json Renderer::eval_arrayaccess(const objects::ArrayAccess & aa)
   }
 }
 
-json::Json Renderer::eval_binop(const objects::BinOp & binop)
+liquid::Value Renderer::eval_binop(const objects::BinOp & binop)
 {
   switch (binop.operation)
   {
@@ -300,31 +427,31 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
     break;
   }
 
-  const json::Json lhs = eval(binop.lhs);
-  const json::Json rhs = eval(binop.rhs);
+  const liquid::Value lhs = eval(binop.lhs);
+  const liquid::Value rhs = eval(binop.rhs);
 
   switch (binop.operation)
   {
   case objects::BinOp::Equal:
-    return lhs == rhs;
+    return liquid::compare(lhs, rhs) == 0;
   case objects::BinOp::Inequal:
-    return lhs != rhs;
+    return liquid::compare(lhs, rhs) != 0;
   case objects::BinOp::Less:
-    return json::compare(lhs, rhs) < 0;
+    return liquid::compare(lhs, rhs) < 0;
   case objects::BinOp::Leq:
-    return json::compare(lhs, rhs) <= 0;
+    return liquid::compare(lhs, rhs) <= 0;
   case objects::BinOp::Greater:
-    return json::compare(lhs, rhs) > 0;
+    return liquid::compare(lhs, rhs) > 0;
   case objects::BinOp::Geq:
-    return json::compare(lhs, rhs) >= 0;
+    return liquid::compare(lhs, rhs) >= 0;
   case objects::BinOp::Add:
-    return json_add(lhs, rhs);
+    return value_add(lhs, rhs);
   case objects::BinOp::Sub:
-    return json_sub(lhs, rhs);
+    return value_sub(lhs, rhs);
   case objects::BinOp::Mul:
-    return json_mul(lhs, rhs);
+    return value_mul(lhs, rhs);
   case objects::BinOp::Div:
-    return json_div(lhs, rhs);
+    return value_div(lhs, rhs);
   default:
     break;
   }
@@ -333,15 +460,15 @@ json::Json Renderer::eval_binop(const objects::BinOp & binop)
   return nullptr;
 }
 
-json::Json Renderer::eval_logicalnot(const objects::LogicalNot& op)
+liquid::Value Renderer::eval_logicalnot(const objects::LogicalNot& op)
 {
   return !evalCondition(eval(op.object));
 }
 
-json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
+liquid::Value Renderer::eval_pipe(const objects::Pipe & pipe)
 {
-  json::Json obj = eval(pipe.object);
-  std::vector<json::Json> args = eval(pipe.arguments);
+  liquid::Value obj = eval(pipe.object);
+  std::vector<liquid::Value> args = eval(pipe.arguments);
 
   try
   {
@@ -353,147 +480,98 @@ json::Json Renderer::eval_pipe(const objects::Pipe & pipe)
     throw;
   }
 }
-json::Json Renderer::json_add(const json::Json& lhs, const json::Json& rhs) const
+
+liquid::Value Renderer::value_add(const liquid::Value& lhs, const liquid::Value& rhs) const
 {
-  if (lhs.type() == json::JsonType::Integer)
+  if (lhs.is<int>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toInt() + rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toInt() + rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<int>() + rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<int>() + rhs.as<double>();
   }
-  else if (lhs.type() == json::JsonType::Number)
+  else if (lhs.is<double>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toNumber() + rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toNumber() + rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<double>() + rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<double>() + rhs.as<double>();
   }
-  else if (lhs.type() == json::JsonType::String)
+  else if (lhs.is<std::string>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::String:
-      return lhs.toString() + rhs.toString();
-    default:
-      break;
-    }
+    if (rhs.is<std::string>())
+      return lhs.as<std::string>() + rhs.as<std::string>();
   }
-  else if (lhs.type() == json::JsonType::Array)
+  else if (lhs.isArray())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Array:
+    if (rhs.isArray())
       return ArrayFilters::concat(lhs.toArray(), rhs.toArray());
-    default:
-      break;
-    }
   }
 
   throw EvaluationException{ "operator + cannot proceed with given operands" };
 }
 
-json::Json Renderer::json_sub(const json::Json& lhs, const json::Json& rhs) const
+liquid::Value Renderer::value_sub(const liquid::Value& lhs, const liquid::Value& rhs) const
 {
-  if (lhs.type() == json::JsonType::Integer)
+  if (lhs.is<int>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toInt() - rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toInt() - rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<int>() - rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<int>() - rhs.as<double>();
   }
-  else if (lhs.type() == json::JsonType::Number)
+  else if (lhs.is<double>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toNumber() - rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toNumber() - rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<double>() - rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<double>() - rhs.as<double>();
   }
 
   throw EvaluationException{ "operator - cannot proceed with given operands" };
 }
 
-json::Json Renderer::json_mul(const json::Json& lhs, const json::Json& rhs) const
+liquid::Value Renderer::value_mul(const liquid::Value& lhs, const liquid::Value& rhs) const
 {
-  if (lhs.type() == json::JsonType::Integer)
+  if (lhs.is<int>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toInt() * rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toInt() * rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<int>() * rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<int>() * rhs.as<double>();
   }
-  else if (lhs.type() == json::JsonType::Number)
+  else if (lhs.is<double>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toNumber() * rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toNumber() * rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<double>() * rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<double>() * rhs.as<double>();
   }
 
   throw EvaluationException{ "operator * cannot proceed with given operands" };
 }
 
-json::Json Renderer::json_div(const json::Json& lhs, const json::Json& rhs) const
+liquid::Value Renderer::value_div(const liquid::Value& lhs, const liquid::Value& rhs) const
 {
-  if (lhs.type() == json::JsonType::Integer)
+  if (lhs.is<int>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toInt() / rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toInt() / rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<int>() / rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<int>() / rhs.as<double>();
   }
-  else if (lhs.type() == json::JsonType::Number)
+  else if (lhs.is<double>())
   {
-    switch (rhs.type())
-    {
-    case json::JsonType::Integer:
-      return lhs.toNumber() / rhs.toInt();
-    case json::JsonType::Number:
-      return lhs.toNumber() / rhs.toNumber();
-    default:
-      break;
-    }
+    if (rhs.is<int>())
+      return lhs.as<double>() / rhs.as<int>();
+    else if (rhs.is<double>())
+      return lhs.as<double>() / rhs.as<double>();
   }
 
-  throw EvaluationException{ "operator * cannot proceed with given operands" };
+  throw EvaluationException{ "operator / cannot proceed with given operands" };
 }
 
-json::Json Renderer::applyFilter(const std::string& name, const json::Json& object, const std::vector<json::Json>& args)
+liquid::Value Renderer::applyFilter(const std::string& name, const liquid::Value& object, const std::vector<liquid::Value>& args)
 {
   return BuiltinFilters::apply(name, object, args);
 }
@@ -513,29 +591,30 @@ void Renderer::visitTag(const tags::Assign & assign)
 {
   if (assign.global_scope)
   {
-    context().scopes()[0].data[assign.variable] = eval(assign.value);
+    context().scopes()[0].data.insert(assign.variable, eval(assign.value));
   }
   else if (assign.parent_scope)
   {
-    context().parentFileScope().data[assign.variable] = eval(assign.value);
+    context().parentFileScope().data.insert(assign.variable, eval(assign.value));
   }
   else
   {
-    context().currentFileScope().data[assign.variable] = eval(assign.value);
+    context().currentFileScope().data.insert(assign.variable, eval(assign.value));
   }
 }
 
 void Renderer::visitTag(const tags::Capture& tag)
 {
   std::string captured = capture(tag.body);
-  context().currentFileScope().data[tag.variable] = std::move(captured);
+  context().currentFileScope().data.insert(tag.variable, std::move(captured));
 }
 
 void Renderer::visitTag(const tags::For & tag)
 {
-  json::Json container = eval(tag.object);
+  liquid::Value container = eval(tag.object);
 
   Context::Scope forloop{ context(), Context::ControlBlockScope };
+  forloop["forloop"] = liquid::Map();
 
   if (container.isArray())
   {
@@ -543,9 +622,9 @@ void Renderer::visitTag(const tags::For & tag)
     {
       forloop[tag.variable] = container.at(i);
 
-      forloop["forloop"]["index"] = i;
-      forloop["forloop"]["first"] = (i == 0);
-      forloop["forloop"]["last"] = (i == container.length() - 1);
+      forloop["forloop"].toMap()["index"] = i;
+      forloop["forloop"].toMap()["first"] = (i == 0);
+      forloop["forloop"].toMap()["last"] = (i == container.length() - 1);
 
       process(tag.body);
 
@@ -615,13 +694,14 @@ void Renderer::visitTag(const tags::Include& tag)
   const Template& tmplt = it->second;
 
   Context::Scope include_scope{ context(), tmplt };
-  include_scope["include"]["__"] = true;
+  include_scope["include"] = liquid::Map();
+  include_scope["include"].toMap()["__"] = true;
 
   for (const auto& e : tag.objects)
   {
     const std::string& var_name = e.first;
-    json::Json var_value = eval(e.second);
-    include_scope["include"][var_name] = var_value;
+    liquid::Value var_value = eval(e.second);
+    include_scope["include"].toMap()[var_name] = var_value;
   }
 
   process(tmplt.nodes());
@@ -632,39 +712,47 @@ void Renderer::visitTag(const tags::Newline&)
   m_result.push_back('\n');
 }
 
-json::Json Renderer::visitObject(const objects::Value& val)
+liquid::Value Renderer::visitObject(const objects::Value& val)
 {
   return eval_value(val);
 }
 
-json::Json Renderer::visitObject(const objects::Variable& var)
+liquid::Value Renderer::visitObject(const objects::Variable& var)
 {
   return eval_variable(var);
 }
 
-json::Json Renderer::visitObject(const objects::MemberAccess& ma)
+liquid::Value Renderer::visitObject(const objects::MemberAccess& ma)
 {
   return eval_memberaccess(ma);
 }
 
-json::Json Renderer::visitObject(const objects::ArrayAccess& aa)
+liquid::Value Renderer::visitObject(const objects::ArrayAccess& aa)
 {
   return eval_arrayaccess(aa);
 }
 
-json::Json Renderer::visitObject(const objects::BinOp& binop)
+liquid::Value Renderer::visitObject(const objects::BinOp& binop)
 {
   return eval_binop(binop);
 }
 
-json::Json Renderer::visitObject(const objects::LogicalNot& obj)
+liquid::Value Renderer::visitObject(const objects::LogicalNot& obj)
 {
   return eval_logicalnot(obj);
 }
 
-json::Json Renderer::visitObject(const objects::Pipe& pipe)
+liquid::Value Renderer::visitObject(const objects::Pipe& pipe)
 {
   return eval_pipe(pipe);
 }
+
+/*!
+ * \endclass
+ */
+
+/*!
+ * \endnamespace
+ */
 
 } // namespace liquid
