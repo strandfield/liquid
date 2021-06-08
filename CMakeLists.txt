@@ -22,22 +22,6 @@ if(ENABLE_COVERAGE)
 endif()
 
 ##################################################################
-###### json-toolkit
-##################################################################
-
-if(NOT TARGET json-toolkit)
-
-  file(GLOB_RECURSE JSON_HDR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include/*.h)
-  add_custom_target(json-toolkit SOURCES ${JSON_HDR_FILES})
-
-  set(JSONTOOLKIT_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/json-toolkit/include")
-
-#add_library(json-toolkit INTERFACE)
-#target_sources(json-toolkit INTERFACE ${JSON_HDR_FILES})
-
-endif()
-
-##################################################################
 ###### liquid
 ##################################################################
 
@@ -48,7 +32,6 @@ file(GLOB_RECURSE HDR_FILES
 )
 add_library(liquid SHARED ${HDR_FILES} ${SRC_FILES})
 target_include_directories(liquid PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(liquid PUBLIC ${JSONTOOLKIT_INCLUDE_DIRS})
 
 foreach(_source IN ITEMS ${HDR_FILES} ${SRC_FILES})
     get_filename_component(_source_path "${_source}" PATH)
