@@ -5,6 +5,7 @@
 #include "liquid/value.h"
 #include "liquid/value_p.h"
 
+#include <cstring>
 #include <stdexcept>
 
 /*!
@@ -29,7 +30,7 @@ bool NullValue::is_null() const
 
 std::type_index NullValue::type_index() const
 {
-  return std::type_index(typeid(nullptr_t));
+  return std::type_index(typeid(std::nullptr_t));
 }
 
 
@@ -251,7 +252,7 @@ Value::Value()
  * \fn Value(nullptr_t)
  * \brief constructs a null value
  */
-Value::Value(nullptr_t)
+Value::Value(std::nullptr_t)
   : d(null_impl)
 {
 

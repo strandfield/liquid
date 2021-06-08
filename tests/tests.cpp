@@ -383,7 +383,7 @@ TEST(Liquid, manual_whitespace_control) {
 
     liquid::Map data = {};
     liquid::Array people;
-    data["people"] = liquid::Array({"Bob", "Alice"});
+    data["people"] = liquid::Array({liquid::Value("Bob"), liquid::Value("Alice")});
 
     tmplt.skipWhitespacesAfterTag();
     std::string result = tmplt.render(data);

@@ -110,7 +110,7 @@ public:
   Value(const Value&) = default;
   ~Value() = default;
   
-  Value(nullptr_t);
+  Value(std::nullptr_t);
   Value(bool b);
   Value(int n);
   Value(double x);
