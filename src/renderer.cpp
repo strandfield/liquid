@@ -281,7 +281,7 @@ void Renderer::log(const EvaluationException& ex)
 {
   record(ex);
 
-  if (ex.template_)
+  if (ex.template_ && ex.offset_ < ex.template_->source().size())
   {
     if (ex.template_ != m_template && !ex.template_->filePath().empty())
     {
@@ -688,7 +688,7 @@ void Renderer::visitTag(const tags::Include& tag)
 
   if (it == templates().end())
   {
-    throw EvaluationException{ "No template named '" + tag.name + "'" };
+    throw EvaluationException{ "No template named '" + tag.name + "'", context().currentTemplate(), tag.offset() };
   }
 
   const Template& tmplt = it->second;

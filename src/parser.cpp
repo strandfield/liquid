@@ -878,6 +878,7 @@ void Parser::process_tag_include(const Token& keyword, std::vector<Token>& token
   std::string template_name = tokens.front().toString();
 
   auto result = std::make_shared<tags::Include>(std::move(template_name));
+  result->setOffset(keyword.text.offset_);
 
   tokens.erase(tokens.begin());
 
@@ -900,6 +901,8 @@ void Parser::process_tag_capture(const Token& keyword, std::vector<Token>& token
   std::string name = vec::take_first(tokens).toString();
 
   auto tag = std::make_shared<tags::Capture>(name, keyword.text.offset_);
+  tag->setOffset(keyword.text.offset_);
+
   mStack.push_back(tag);
 }
 

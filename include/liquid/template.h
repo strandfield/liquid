@@ -29,7 +29,7 @@ class LIQUID_API Node
 public:
   virtual ~Node() = default;
 
-  Node(size_t off = std::numeric_limits<size_t>::max()) : m_offset(off) { }
+  explicit Node(size_t off = std::numeric_limits<size_t>::max()) : m_offset(off) { }
 
   template<typename T>
   bool is() const { return dynamic_cast<const T*>(this) != nullptr; }
@@ -45,6 +45,7 @@ public:
   virtual bool isObject() const;
 
   size_t offset() const { return m_offset; }
+  void setOffset(size_t off) { m_offset = off;  }
 
 private:
   size_t m_offset;

@@ -15,7 +15,7 @@ class Renderer;
 class LIQUID_API Tag : public templates::Node
 {
 public:
-  Tag(size_t off = std::numeric_limits<size_t>::max());
+  explicit Tag(size_t off = std::numeric_limits<size_t>::max());
 
   bool isTag() const override { return true; }
   virtual void accept(Renderer& renderer) = 0;
