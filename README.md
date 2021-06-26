@@ -1,8 +1,8 @@
 
 # `liquid` 
 
-[![Build Status](https://api.travis-ci.org/bandicode/liquid.svg?branch=master)](https://travis-ci.org/bandicode/liquid)
-[![codecov](https://codecov.io/gh/bandicode/liquid/branch/master/graph/badge.svg)](https://codecov.io/gh/bandicode/liquid)
+[![Build Status](https://api.travis-ci.com/strandfield/liquid.svg?branch=master)](https://travis-ci.com/github/strandfield/liquid)
+[![codecov](https://codecov.io/gh/strandfield/liquid/branch/master/graph/badge.svg?token=8jDVnpsssJ)](https://codecov.io/gh/strandfield/liquid)
 
 This project is a C++ port of [Shopify's Liquid template engine](https://github.com/Shopify/liquid) (originally written in Ruby).
 
