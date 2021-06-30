@@ -318,6 +318,7 @@ void Template::skipWhitespacesAfterTag()
  * \param template source
  * \param optional filepath from which the source was read
  * \brief parse a template
+ * \relates Template
  *
  * This function throws ParserException if parsing fails.
  */
@@ -331,6 +332,7 @@ Template parse(const std::string& str, std::string filepath)
  * \fn Template parseFile(std::string filepath)
  * \param filepath of the template to parse
  * \brief parse a template
+ * \relates Template
  *
  * This function uses \c{parse()} internally.
  */

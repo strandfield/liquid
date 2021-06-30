@@ -100,7 +100,7 @@ public:
 
 /*!
  * \class Value
- * \brief holds a value that can by the renderer
+ * \brief holds a value that can be used by the renderer
  */
 
 class LIQUID_API Value
