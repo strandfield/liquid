@@ -1,3 +1,5 @@
+image: localhost:5000/cpp-runner:latest
+
 build-job:
   stage: build
   script:
