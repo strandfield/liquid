@@ -6,7 +6,10 @@ build-job:
     - echo "Hello, $GITLAB_USER_LOGIN!"
     - gcc --version
     - cmake --version
-
+    - mkdir build && cd build
+    - cmake ..
+    - make
+    
 test-job1:
   stage: test
   script:
