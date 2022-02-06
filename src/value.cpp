@@ -747,6 +747,11 @@ inline int sign(int diff)
   return (0 < diff) - (diff < 0);
 }
 
+inline int sign(double diff)
+{
+  return (0. < diff) - (diff < 0.);
+}
+
 template<typename T>
 int number_compare(const T* lhs_node, const T* rhs_node)
 {
